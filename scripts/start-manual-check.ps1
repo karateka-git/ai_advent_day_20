@@ -1,5 +1,6 @@
 param(
-    [switch]$Headless
+    [switch]$Headless,
+    [switch]$SkipBuild
 )
 
 Set-StrictMode -Version Latest
@@ -114,10 +115,14 @@ $serverHost = "127.0.0.1"
 $serverPort = 3000
 $serverEndpoint = "http://$serverHost`:$serverPort/mcp"
 
-Write-Output "Building project..."
-& .\gradlew.bat build
-if ($LASTEXITCODE -ne 0) {
-    throw "Build failed with exit code $LASTEXITCODE."
+if ($SkipBuild) {
+    Write-Output "Skipping build step and reusing existing artifacts..."
+} else {
+    Write-Output "Building project..."
+    & .\gradlew.bat build
+    if ($LASTEXITCODE -ne 0) {
+        throw "Build failed with exit code $LASTEXITCODE."
+    }
 }
 
 Stop-ListeningProcess -Port $serverPort

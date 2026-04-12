@@ -37,7 +37,10 @@
   - запуск сервера: `.\gradlew.bat runServer`
   - запуск клиента: `.\gradlew.bat runClient`
   - подготовка ручной проверки: `powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1`
+  - запуск уже собранного проекта: `powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -SkipBuild`
   - сквозная проверка: `powershell -ExecutionPolicy Bypass -File .\scripts\check-e2e.ps1`
+- Трактовка пользовательской фразы `собери проект`: по умолчанию это запуск `powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1`, а не только `.\gradlew.bat build`.
+- Трактовка пользовательской фразы `запусти проект`: по умолчанию это запуск `powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -SkipBuild`, то есть тот же ручной launcher без шага сборки.
 - Локальный endpoint по умолчанию: `http://127.0.0.1:3000/mcp`.
 - Текущий transport-подход: Streamable HTTP, на сервере используется stateless-вариант публикации.
 - Если меняется способ запуска или проверочный контур, обновить этот раздел, README и журнал реализации синхронно.

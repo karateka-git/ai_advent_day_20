@@ -345,3 +345,22 @@
 
 - `powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -Headless` завершается успешно;
 - сценарий включает сборку проекта, запуск сервера и успешный клиентский `initialize -> tools/list`.
+
+## Уточнение. Команда `запусти проект`
+
+Статус: завершён
+
+Цель уточнения:
+
+- добавить отдельную пользовательскую команду для быстрого запуска уже собранных артефактов без повторной сборки.
+
+Выполненные действия:
+
+1. В `scripts/start-manual-check.ps1` добавлен параметр `-SkipBuild`.
+2. При включённом `-SkipBuild` launcher пропускает `.\gradlew.bat build` и сразу переходит к запуску сервера и клиента.
+3. README, `agent-preflight` и `development-policy` обновлены так, чтобы фраза `запусти проект` по умолчанию трактовалась как:
+   - `powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -SkipBuild`
+
+Проверка:
+
+- быстрый launcher без сборки должен использовать уже имеющиеся артефакты и сохранять тот же workflow ручной проверки.

@@ -55,6 +55,16 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1
 - дожидается готовности локального endpoint;
 - открывает клиента в отдельном окне PowerShell.
 
+Для этого репозитория пользовательская фраза `собери проект` по умолчанию трактуется именно как этот workflow ручной проверки, а не как один только `.\gradlew.bat build`.
+
+Если нужно запустить уже собранные артефакты без новой сборки, можно использовать:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -SkipBuild
+```
+
+Для этого репозитория пользовательская фраза `запусти проект` по умолчанию трактуется именно как этот вариант без сборки.
+
 Сквозная end-to-end проверка:
 
 ```powershell
