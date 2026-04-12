@@ -94,5 +94,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -Headl
 
 - проектный `MemoryBank`: [MemoryBank/README.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_16/MemoryBank/README.md)
 - preflight для новых сессий: [MemoryBank/agent-preflight.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_16/MemoryBank/agent-preflight.md)
-- ТЗ на реализацию текущего этапа: [docs/technical-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_16/docs/technical-spec.md)
-- журнал выполненных шагов: [docs/implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_16/docs/implementation-log.md)
+- ТЗ по MCP reference-части: [docs/technical-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_16/docs/technical-spec.md)
+- журнал реализации MCP reference-части: [docs/mcp-reference-implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_16/docs/mcp-reference-implementation-log.md)
+- ТЗ по агентной архитектуре: [docs/agent-architecture-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_16/docs/agent-architecture-spec.md)
+- журнал реализации агентной архитектуры: [docs/agent-architecture-implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_16/docs/agent-architecture-implementation-log.md)
