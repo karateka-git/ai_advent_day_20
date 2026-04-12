@@ -36,6 +36,7 @@
   - сборка: `.\gradlew.bat build`
   - запуск сервера: `.\gradlew.bat runServer`
   - запуск клиента: `.\gradlew.bat runClient`
+  - подготовка ручной проверки: `powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1`
   - сквозная проверка: `powershell -ExecutionPolicy Bypass -File .\scripts\check-e2e.ps1`
 - Локальный endpoint по умолчанию: `http://127.0.0.1:3000/mcp`.
 - Текущий transport-подход: Streamable HTTP, на сервере используется stateless-вариант публикации.

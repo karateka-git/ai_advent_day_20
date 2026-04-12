@@ -42,6 +42,19 @@
 .\gradlew.bat runClient
 ```
 
+Подготовка ручной проверки одним запуском:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1
+```
+
+Эта команда:
+
+- собирает проект;
+- поднимает сервер в отдельном окне PowerShell;
+- дожидается готовности локального endpoint;
+- открывает клиента в отдельном окне PowerShell.
+
 Сквозная end-to-end проверка:
 
 ```powershell
@@ -58,6 +71,12 @@ powershell -ExecutionPolicy Bypass -File .\scripts\check-e2e.ps1
 - вывести в консоль серверную информацию и инструменты `ping` и `echo`.
 
 В успешной e2e-проверке скрипт дополнительно печатает `E2E check passed.`.
+
+Если нужно прогнать тот же workflow без отдельных окон, можно использовать:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -Headless
+```
 
 ## Документация
 
