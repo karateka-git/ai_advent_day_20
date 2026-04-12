@@ -43,7 +43,6 @@ dependencies {
     implementation("io.modelcontextprotocol:kotlin-sdk-client:$mcpVersion")
     implementation("io.modelcontextprotocol:kotlin-sdk-server:$mcpVersion")
     implementation("io.ktor:ktor-client-cio")
-    implementation("io.ktor:ktor-client-sse")
     implementation("io.ktor:ktor-server-cio")
     implementation("io.ktor:ktor-server-sse")
     implementation("io.ktor:ktor-server-content-negotiation")

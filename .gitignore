@@ -5,6 +5,8 @@ Thumbs.db
 .vscode/
 
 # Build outputs
+.gradle/
+.kotlin/
 build/
 dist/
 out/
