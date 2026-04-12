@@ -419,6 +419,22 @@
    - list tools.
 4. Подготовить структуру ответа агента так, чтобы позже можно было добавить resources и tool calls.
 
+Подэтапы внедрения:
+
+1. Детализировать шаги `Этапа 3` в ТЗ и зафиксировать границу ответственности:
+   - верхний runtime-flow может пока ещё не проходить через `application`;
+   - но orchestration `connect` уже должен выполняться в `agent`;
+   - `agent` должен использовать `McpClient`, а не MCP SDK напрямую.
+2. Добавить рабочую реализацию агента, которая принимает `AgentRequest.Connect`, вызывает `McpClient` и возвращает `AgentResponse.ConnectSuccess` или `AgentResponse.Failure`.
+3. Перевести текущий клиентский сценарий `connect` на использование `Agent` вместо прямого вызова `McpClient`.
+4. Добавить локальные unit-проверки на агентный orchestration-слой:
+   - успешный сценарий `connect`;
+   - сценарий ошибки при обращении к `McpClient`.
+5. Прогнать:
+   - `.\gradlew.bat test`
+   - `powershell -ExecutionPolicy Bypass -File .\scripts\check-e2e.ps1`
+6. Зафиксировать результат `Этапа 3` в журнале реализации агентной архитектуры.
+
 ### Этап 4. Внедрение Application-Слоя Команд
 
 Цель:
