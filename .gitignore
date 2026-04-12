@@ -1,0 +1,19 @@
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Build outputs
+build/
+dist/
+out/
+target/
+
+# Runtime and logs
+data/
+*.log
+
+# Environment
+.env
+.env.*
