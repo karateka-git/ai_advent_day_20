@@ -1,10 +1,11 @@
 package ru.compadre.mcp.client
 
 import kotlinx.coroutines.runBlocking
-import ru.compadre.mcp.agent.Agent
-import ru.compadre.mcp.agent.AgentRequest
-import ru.compadre.mcp.agent.AgentResponse
 import ru.compadre.mcp.agent.DefaultAgent
+import ru.compadre.mcp.application.command.ConnectCommand
+import ru.compadre.mcp.application.result.ConnectResult
+import ru.compadre.mcp.application.service.ApplicationCommandHandler
+import ru.compadre.mcp.application.service.DefaultApplicationCommandHandler
 import ru.compadre.mcp.config.McpProjectConfig
 import ru.compadre.mcp.mcp.DefaultMcpClient
 import ru.compadre.mcp.mcp.model.McpToolDescriptor
@@ -29,14 +30,28 @@ internal enum class ClientCommand {
 
 private suspend fun runConnectCommand() {
     val endpoint = McpProjectConfig.defaultEndpoint()
-    val agent: Agent = DefaultAgent(DefaultMcpClient())
+    val commandHandler: ApplicationCommandHandler = DefaultApplicationCommandHandler(
+        agent = DefaultAgent(DefaultMcpClient()),
+    )
+    val result = commandHandler.handle(
+        ConnectCommand(endpointOverride = endpoint),
+    )
 
-    when (val response = agent.handle(AgentRequest.Connect(endpoint))) {
-        is AgentResponse.ConnectSuccess -> {
-            printConnectionSummary(response)
-            println(renderToolsList(response.tools))
+    when (result) {
+        is ConnectResult -> {
+            if (!result.connected) {
+                throw IllegalStateException(result.errorMessage ?: "Не удалось подключиться к MCP server.")
+            }
+
+            printConnectionSummary(result)
+            println(renderToolsList(result.tools.map { tool ->
+                McpToolDescriptor(
+                    name = tool.name,
+                    title = tool.title,
+                    description = tool.description,
+                )
+            }))
         }
-        is AgentResponse.Failure -> throw IllegalStateException(response.message)
     }
 }
 
@@ -68,12 +83,12 @@ private fun configureUtf8Console() {
     )
 }
 
-private fun printConnectionSummary(response: AgentResponse.ConnectSuccess) {
-    println("Connected to MCP server: ${response.endpoint}")
-    println("Server name: ${response.serverInfo.name}")
-    println("Server version: ${response.serverInfo.version}")
-    println("Server title: ${response.serverInfo.title ?: "<unknown>"}")
-    println("Server instructions: ${response.serverInfo.instructions ?: "<none>"}")
+private fun printConnectionSummary(result: ConnectResult) {
+    println("Connected to MCP server: ${result.endpoint}")
+    println("Server name: ${result.serverName ?: "<unknown>"}")
+    println("Server version: ${result.serverVersion ?: "<unknown>"}")
+    println("Server title: ${result.serverTitle ?: "<unknown>"}")
+    println("Server instructions: ${result.serverInstructions ?: "<none>"}")
 }
 
 internal fun renderToolsList(tools: List<McpToolDescriptor>): String {
