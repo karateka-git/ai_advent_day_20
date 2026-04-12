@@ -164,3 +164,48 @@
 Следующий шаг:
 
 - перейти к `Этапу 4` и встроить `application` слой как обработчик команд, который будет делегировать выполнение агенту и возвращать `CommandResult`.
+
+## Этап 4. Внедрение Application-Слоя Команд
+
+Статус: завершён
+
+Цель этапа:
+
+- встроить рабочий `application` слой поверх агента;
+- перевести runtime-flow на `Command -> ApplicationCommandHandler -> Agent -> McpClient`;
+- сделать `CommandResult` основным контрактом верхнего слоя вместо `AgentResponse`.
+
+Выполненные действия:
+
+1. В архитектурном ТЗ детализированы подэтапы `Этапа 4`, чтобы зафиксировать vertical slice через `Command` и `CommandResult`.
+2. Добавлена рабочая реализация `DefaultApplicationCommandHandler`, которая:
+   - принимает `ConnectCommand`;
+   - вызывает `Agent`;
+   - преобразует `AgentResponse.ConnectSuccess` в успешный `ConnectResult`;
+   - преобразует `AgentResponse.Failure` в неуспешный `ConnectResult`.
+3. Добавлены unit-проверки application-слоя:
+   - успешное выполнение `ConnectCommand`;
+   - перевод агентной ошибки в `ConnectResult` с `connected = false`.
+4. Текущий клиентский сценарий `connect` переведён на использование `ApplicationCommandHandler` вместо прямого вызова `Agent`.
+
+Принятые решения:
+
+- не расширять пока `Command` и `CommandResult` дополнительными ветками, а отработать до конца один полноценный `connect` вертикальный срез;
+- сохранить прежний пользовательский смысл `runClient`: при неуспешном `ConnectResult` entrypoint всё ещё завершает сценарий исключением;
+- до выделения presentation-слоя использовать в `ConnectCommand` явный `endpointOverride`, чтобы application-слой уже был реален, но не зависел от CLI-аргументов напрямую.
+
+Проверка:
+
+- `.\gradlew.bat test` завершается успешно;
+- `powershell -ExecutionPolicy Bypass -File .\scripts\check-e2e.ps1` завершается успешно;
+- e2e-проверка подтверждает, что после встраивания `application` слоя `runClient` по-прежнему выводит server info и список `ping`/`echo`.
+
+Коммиты этапа:
+
+- `5a91cef` — детализация шагов `Этапа 4` в архитектурном ТЗ;
+- `a195a08` — добавление `DefaultApplicationCommandHandler` и unit-проверок application-слоя;
+- `42125d9` — перевод текущего `connect` flow на application-слой.
+
+Следующий шаг:
+
+- перейти к `Этапу 5` и сделать CLI тонким presentation-адаптером через `CliCommandParser` и `CliOutputFormatter`, упростив `main` до composition root.
