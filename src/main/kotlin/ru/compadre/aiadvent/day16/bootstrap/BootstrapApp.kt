@@ -1,10 +1,10 @@
 package ru.compadre.aiadvent.day16.bootstrap
 
 /**
- * Temporary bootstrap entrypoint for the project skeleton.
+ * Временная точка входа для каркаса проекта.
  *
- * Dedicated server and client entrypoints are added during stage 1 so that
- * later stages can implement them independently without restructuring the build.
+ * Отдельные точки входа для сервера и клиента добавлены на первом этапе,
+ * чтобы дальше можно было развивать их независимо без перестройки сборки.
  */
 fun main() {
     println("ai_advent_day_16 Kotlin/MCP project skeleton is ready")

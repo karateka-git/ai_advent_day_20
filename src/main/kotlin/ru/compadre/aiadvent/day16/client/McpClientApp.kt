@@ -3,7 +3,7 @@ package ru.compadre.aiadvent.day16.client
 import ru.compadre.aiadvent.day16.config.McpProjectConfig
 
 /**
- * Placeholder client entrypoint for the upcoming MCP client implementation.
+ * Временная точка входа клиента для следующего этапа реализации MCP client.
  */
 fun main() {
     println(

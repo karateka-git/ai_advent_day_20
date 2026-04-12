@@ -1,7 +1,7 @@
 package ru.compadre.aiadvent.day16.config
 
 /**
- * Shared project-level defaults for the local MCP sandbox.
+ * Общие настройки проекта для локального MCP sandbox.
  */
 object McpProjectConfig {
     const val SERVER_HOST: String = "127.0.0.1"
