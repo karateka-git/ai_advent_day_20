@@ -1,10 +1,12 @@
 package ru.compadre.mcp.client
 
 import kotlinx.coroutines.runBlocking
+import ru.compadre.mcp.agent.Agent
+import ru.compadre.mcp.agent.AgentRequest
+import ru.compadre.mcp.agent.AgentResponse
+import ru.compadre.mcp.agent.DefaultAgent
 import ru.compadre.mcp.config.McpProjectConfig
 import ru.compadre.mcp.mcp.DefaultMcpClient
-import ru.compadre.mcp.mcp.McpClient
-import ru.compadre.mcp.mcp.model.McpConnectionSnapshot
 import ru.compadre.mcp.mcp.model.McpToolDescriptor
 import java.io.FileDescriptor
 import java.io.FileOutputStream
@@ -27,11 +29,15 @@ internal enum class ClientCommand {
 
 private suspend fun runConnectCommand() {
     val endpoint = McpProjectConfig.defaultEndpoint()
-    val mcpClient: McpClient = DefaultMcpClient()
-    val snapshot = mcpClient.connect(endpoint)
+    val agent: Agent = DefaultAgent(DefaultMcpClient())
 
-    printConnectionSummary(snapshot)
-    println(renderToolsList(snapshot.tools))
+    when (val response = agent.handle(AgentRequest.Connect(endpoint))) {
+        is AgentResponse.ConnectSuccess -> {
+            printConnectionSummary(response)
+            println(renderToolsList(response.tools))
+        }
+        is AgentResponse.Failure -> throw IllegalStateException(response.message)
+    }
 }
 
 internal fun parseClientCommand(args: Array<String>): ClientCommand {
@@ -62,12 +68,12 @@ private fun configureUtf8Console() {
     )
 }
 
-private fun printConnectionSummary(snapshot: McpConnectionSnapshot) {
-    println("Connected to MCP server: ${snapshot.endpoint}")
-    println("Server name: ${snapshot.serverInfo.name}")
-    println("Server version: ${snapshot.serverInfo.version}")
-    println("Server title: ${snapshot.serverInfo.title ?: "<unknown>"}")
-    println("Server instructions: ${snapshot.serverInfo.instructions ?: "<none>"}")
+private fun printConnectionSummary(response: AgentResponse.ConnectSuccess) {
+    println("Connected to MCP server: ${response.endpoint}")
+    println("Server name: ${response.serverInfo.name}")
+    println("Server version: ${response.serverInfo.version}")
+    println("Server title: ${response.serverInfo.title ?: "<unknown>"}")
+    println("Server instructions: ${response.serverInfo.instructions ?: "<none>"}")
 }
 
 internal fun renderToolsList(tools: List<McpToolDescriptor>): String {
