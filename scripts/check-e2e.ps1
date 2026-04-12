@@ -1,5 +1,8 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+[Console]::InputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 
 function Stop-ListeningProcess {
     param(
@@ -56,6 +59,55 @@ function Assert-OutputContains {
     }
 }
 
+function Invoke-Utf8GradleClient {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$StdoutPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$StderrPath
+    )
+
+    $psi = [System.Diagnostics.ProcessStartInfo]::new()
+    $psi.FileName = "cmd.exe"
+    $psi.Arguments = "/c chcp 65001>nul && .\\gradlew.bat runClient --no-daemon"
+    $psi.WorkingDirectory = $ProjectRoot
+    $psi.UseShellExecute = $false
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.StandardOutputEncoding = [System.Text.Encoding]::UTF8
+    $psi.StandardErrorEncoding = [System.Text.Encoding]::UTF8
+
+    $process = [System.Diagnostics.Process]::new()
+    $process.StartInfo = $psi
+
+    try {
+        $process.Start() | Out-Null
+        $stdout = $process.StandardOutput.ReadToEnd()
+        $stderr = $process.StandardError.ReadToEnd()
+        $process.WaitForExit()
+        $exitCode = $process.ExitCode
+    } finally {
+        $process.Dispose()
+    }
+
+    [System.IO.File]::WriteAllText($StdoutPath, $stdout, [System.Text.Encoding]::UTF8)
+    [System.IO.File]::WriteAllText($StderrPath, $stderr, [System.Text.Encoding]::UTF8)
+
+    if ($stdout) {
+        [Console]::Out.Write($stdout)
+    }
+
+    if ($stderr) {
+        [Console]::Out.Write($stderr)
+    }
+
+    return $exitCode
+}
+
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $projectRoot
 
@@ -92,12 +144,15 @@ try {
 
     Wait-Port -TargetHost $serverHost -Port $serverPort
 
-    & cmd /c ".\gradlew.bat runClient --no-daemon 2>&1" | Tee-Object -FilePath $clientStdout
-    $clientExitCode = $LASTEXITCODE
+    $clientExitCode = Invoke-Utf8GradleClient `
+        -ProjectRoot $projectRoot `
+        -StdoutPath $clientStdout `
+        -StderrPath $clientStderr
 
     if ($clientExitCode -ne 0) {
-        $clientError = if (Test-Path $clientStdout) { Get-Content $clientStdout -Raw } else { "" }
-        throw "Client process failed with exit code $clientExitCode.`n$clientError"
+        $clientError = if (Test-Path $clientStderr) { Get-Content $clientStderr -Raw } else { "" }
+        $clientOutput = if (Test-Path $clientStdout) { Get-Content $clientStdout -Raw } else { "" }
+        throw "Client process failed with exit code $clientExitCode.`n$clientOutput`n$clientError"
     }
 
     $clientOutput = Get-Content $clientStdout -Raw

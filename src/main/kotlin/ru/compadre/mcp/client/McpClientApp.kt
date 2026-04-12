@@ -13,11 +13,17 @@ import io.modelcontextprotocol.kotlin.sdk.types.ListToolsResult
 import io.modelcontextprotocol.kotlin.sdk.types.Tool
 import ru.compadre.mcp.config.McpProjectConfig
 import kotlinx.coroutines.runBlocking
+import java.io.FileDescriptor
+import java.io.FileOutputStream
+import java.io.PrintStream
+import java.nio.charset.StandardCharsets
 
 /**
  * Точка входа минимального MCP client для сценария `initialize -> tools/list`.
  */
 fun main(): Unit = runBlocking {
+    configureUtf8Console()
+
     val endpoint = McpProjectConfig.defaultEndpoint()
     val httpClient = createHttpClient()
 
@@ -38,6 +44,23 @@ fun main(): Unit = runBlocking {
 
 private fun createHttpClient(): HttpClient = HttpClient(CIO) {
     install(SSE)
+}
+
+private fun configureUtf8Console() {
+    System.setOut(
+        PrintStream(
+            FileOutputStream(FileDescriptor.out),
+            true,
+            StandardCharsets.UTF_8,
+        ),
+    )
+    System.setErr(
+        PrintStream(
+            FileOutputStream(FileDescriptor.err),
+            true,
+            StandardCharsets.UTF_8,
+        ),
+    )
 }
 
 @OptIn(ExperimentalMcpApi::class)
