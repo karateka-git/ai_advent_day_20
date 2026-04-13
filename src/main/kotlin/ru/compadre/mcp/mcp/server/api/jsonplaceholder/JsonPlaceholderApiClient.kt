@@ -5,6 +5,7 @@ import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
+import io.ktor.client.request.parameter
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import ru.compadre.mcp.mcp.server.api.jsonplaceholder.common.models.JsonPlaceholderPost
@@ -54,10 +55,12 @@ internal class DefaultJsonPlaceholderApiClient(
     }
 
     override suspend fun fetchPosts(limit: Int): List<JsonPlaceholderPost> {
-        val response = httpClient.get("$baseUrl/posts")
+        val response = httpClient.get("$baseUrl/posts") {
+            parameter("_limit", limit)
+        }
 
         return when (response.status) {
-            HttpStatusCode.OK -> response.body<List<JsonPlaceholderPost>>().take(limit)
+            HttpStatusCode.OK -> response.body<List<JsonPlaceholderPost>>()
             else -> error(
                 "Mock API вернул неожиданный статус `${response.status.value}` при запросе списка публикаций.",
             )

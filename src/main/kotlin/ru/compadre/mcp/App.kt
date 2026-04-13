@@ -8,6 +8,8 @@ import ru.compadre.mcp.presentation.cli.CliCommandParser
 import ru.compadre.mcp.presentation.cli.CliOutputFormatter
 import ru.compadre.mcp.presentation.cli.DefaultCliCommandParser
 import ru.compadre.mcp.presentation.cli.DefaultCliOutputFormatter
+import ru.compadre.mcp.workflow.result.CommandResult
+import ru.compadre.mcp.workflow.result.ConnectResult
 import ru.compadre.mcp.workflow.service.DefaultWorkflowCommandHandler
 import ru.compadre.mcp.workflow.service.WorkflowCommandHandler
 import java.io.FileDescriptor
@@ -69,6 +71,7 @@ private suspend fun runInteractiveShell(
 ) {
     println("MCP-клиент готов к работе.")
     println("Введите `help`, чтобы увидеть доступные команды.")
+    var isConnected = false
 
     while (true) {
         print("> ")
@@ -96,12 +99,20 @@ private suspend fun runInteractiveShell(
             }
         }
 
-        executeCommand(
+        if (rawInput.lowercase().startsWith("tool ") && !isConnected) {
+            println("Сначала выполните `connect`, чтобы получить доступ к CLI-инструментам.")
+            continue
+        }
+
+        val result = executeCommand(
             commandArgs = rawInput.split(Regex("\\s+")).toTypedArray(),
             commandParser = commandParser,
             commandHandler = commandHandler,
             outputFormatter = outputFormatter,
         )
+        if (result is ConnectResult) {
+            isConnected = result.connected
+        }
     }
 }
 
@@ -112,8 +123,8 @@ private fun configureLogging() {
 private fun helpText(): String = listOf(
     "Доступные команды:",
     "connect - подключиться к MCP-серверу и показать доступные из CLI инструменты.",
-    "tool posts - показать первые 10 публикаций из JSONPlaceholder.",
-    "tool post <postId> - получить публикацию из JSONPlaceholder по идентификатору.",
+    "tool posts - после `connect` показать первые 10 публикаций из JSONPlaceholder.",
+    "tool post <postId> - после `connect` получить публикацию из JSONPlaceholder по идентификатору.",
     "help - показать это сообщение.",
     "exit - завершить сессию клиента.",
 ).joinToString(separator = System.lineSeparator())
@@ -123,13 +134,15 @@ private suspend fun executeCommand(
     commandParser: CliCommandParser,
     commandHandler: WorkflowCommandHandler,
     outputFormatter: CliOutputFormatter,
-) {
+): CommandResult? {
     try {
         val command = commandParser.parse(commandArgs)
         val result = commandHandler.handle(command)
         val output = outputFormatter.format(result)
         println(output)
+        return result
     } catch (error: IllegalArgumentException) {
         println(error.message ?: "Не удалось разобрать команду.")
+        return null
     }
 }
