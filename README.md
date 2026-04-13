@@ -7,24 +7,27 @@
 - поднять локальный MCP server;
 - подключить к нему клиент;
 - пройти сценарий `initialize -> tools/list`;
-- вывести серверную информацию и список доступных инструментов.
+- вывести серверную информацию и список доступных инструментов;
+- вызвать прикладные инструменты поверх `JSONPlaceholder`.
 
 Следующий зафиксированный сценарий развития:
 
-- добавить прикладной MCP-инструмент `fetch_post`;
-- вызывать его через пользовательскую команду `tool post <postId>`;
-- получать данные публикации из mock API `JSONPlaceholder`.
+- убрать пользовательский `connect` из основного CLI;
+- перенести discovery возможностей в lifecycle агента;
+- подключать агента к известным MCP-серверам на старте;
+- показывать пользователю только те команды, которые агент реально нашёл в доступных MCP `tools`.
 
-## Что Внутри
+## Что внутри
 
 - локальный MCP server на Kotlin/Ktor;
 - HTTP endpoint `http://127.0.0.1:3000/mcp`;
 - демонстрационные инструменты `ping` и `echo`;
+- прикладные инструменты `fetch_post` и `list_posts`;
 - интерактивный CLI-клиент;
 - scripted smoke/e2e-проверка;
 - direct launcher-запуск для Windows без Gradle progress UI.
 
-## Текущая Архитектура
+## Текущая архитектура
 
 Клиентская часть организована по цепочке:
 
@@ -37,15 +40,11 @@
 - `agent` оркестрирует выполнение команды через MCP;
 - `mcp` инкапсулирует работу с Kotlin MCP SDK.
 
-Текущий UI — CLI, но архитектура уже не завязана только на него. Это оставляет задел под Web, Android и будущие агентные расширения.
-
 ## Транспорт
 
 Проект использует Streamable HTTP transport. На текущем этапе сервер опубликован через stateless-вариант, потому что он проще для минимального reference-сценария и не требует отдельного session lifecycle на стороне сервера.
 
-Главный плюс такого выбора: клиент работает с обычным HTTP endpoint, поэтому при переносе сервера наружу обычно достаточно сменить URL и инфраструктурное окружение, а не переписывать сам подход к подключению.
-
-## Быстрый Старт
+## Быстрый старт
 
 Сборка проекта:
 
@@ -76,18 +75,14 @@
 .\build\install\mcp-client\bin\mcp-client.bat
 ```
 
-Это основной способ ручной проверки. После старта клиент показывает приглашение и ждёт ручного ввода команд, например `connect`.
+## Команды проекта
 
-## Команды Проекта
-
-Технические Gradle entrypoint-ы:
+Технические Gradle entrypoint'ы:
 
 ```powershell
 .\gradlew.bat runServer
 .\gradlew.bat runClient
 ```
-
-Они сохранены, но для ручного UX предпочтительнее direct launcher-артефакты, потому что в них нет `> Task`, daemon-сообщений и progress bar от Gradle.
 
 Scripted-запуск клиента для smoke/e2e:
 
@@ -101,14 +96,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\invoke-client-commands.ps1 -C
 powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1
 ```
 
-Эта команда:
-
-- собирает проект и launcher-артефакты;
-- поднимает сервер в отдельном окне;
-- дожидается готовности endpoint;
-- открывает интерактивного клиента в отдельном окне.
-
-Для этого репозитория пользовательская фраза `собери проект` по умолчанию трактуется именно как этот workflow, а не как один только `.\gradlew.bat build`.
+Для этого репозитория пользовательская фраза `собери проект` по умолчанию трактуется именно как этот workflow.
 
 Запуск уже собранных артефактов без новой сборки:
 
@@ -130,20 +118,6 @@ Headless-вариант ручной проверки:
 powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -Headless
 ```
 
-В headless-режиме launcher сам подаёт scripted-команду `connect`, потому что интерактивный ввод в текущей консоли там не предполагается.
-
-## Что Считать Успешным Результатом
-
-После запуска сервера и клиента сценарий должен:
-
-- установить соединение с `http://127.0.0.1:3000/mcp`;
-- успешно пройти `initialize`;
-- получить список инструментов через `tools/list`;
-- вывести серверную информацию;
-- показать инструменты `ping` и `echo`.
-
-В успешной e2e-проверке скрипт дополнительно печатает `E2E check passed.`.
-
 ## Документация
 
 - проектный `MemoryBank`: [MemoryBank/README.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/MemoryBank/README.md)
@@ -155,3 +129,6 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -Headl
 - ТЗ по интеграции MCP tool: [docs/mcp-tool-integration-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/docs/mcp-tool-integration-spec.md)
 - журнал реализации интеграции MCP tool: [docs/mcp-tool-integration-implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/docs/mcp-tool-integration-implementation-log.md)
 - контракт первого MCP tool: [docs/mcp-tool-integration-contract.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/docs/mcp-tool-integration-contract.md)
+- ТЗ по agent capability bootstrap: [docs/mcp-agent-capability-bootstrap-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/docs/mcp-agent-capability-bootstrap-spec.md)
+- capability model агента: [docs/mcp-agent-capability-model.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/docs/mcp-agent-capability-model.md)
+- журнал реализации agent capability bootstrap: [docs/mcp-agent-capability-bootstrap-implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/docs/mcp-agent-capability-bootstrap-implementation-log.md)
