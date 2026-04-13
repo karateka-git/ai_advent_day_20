@@ -7,6 +7,8 @@ import kotlin.test.assertIs
 import ru.compadre.mcp.mcp.McpClient
 import ru.compadre.mcp.mcp.model.McpConnectionSnapshot
 import ru.compadre.mcp.mcp.model.McpServerInfo
+import ru.compadre.mcp.mcp.model.McpToolCallRequest
+import ru.compadre.mcp.mcp.model.McpToolCallResult
 import ru.compadre.mcp.mcp.model.McpToolDescriptor
 
 class DefaultAgentTest {
@@ -26,6 +28,10 @@ class DefaultAgentTest {
                         McpToolDescriptor(name = "echo", title = "Echo"),
                     ),
                 )
+
+                override suspend fun callTool(endpoint: String, request: McpToolCallRequest): McpToolCallResult {
+                    error("Сценарий tools/call не должен использоваться в этом тесте.")
+                }
             },
         )
 
@@ -43,6 +49,10 @@ class DefaultAgentTest {
             mcpClient = object : McpClient {
                 override suspend fun connect(endpoint: String): McpConnectionSnapshot {
                     error("boom")
+                }
+
+                override suspend fun callTool(endpoint: String, request: McpToolCallRequest): McpToolCallResult {
+                    error("Сценарий tools/call не должен использоваться в этом тесте.")
                 }
             },
         )

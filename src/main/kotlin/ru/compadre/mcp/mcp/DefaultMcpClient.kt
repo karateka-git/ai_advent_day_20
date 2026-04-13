@@ -8,10 +8,14 @@ import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.client.ClientOptions
 import io.modelcontextprotocol.kotlin.sdk.client.mcpClient
 import io.modelcontextprotocol.kotlin.sdk.client.mcpStreamableHttpTransport
+import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
+import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import io.modelcontextprotocol.kotlin.sdk.types.Tool
 import ru.compadre.mcp.mcp.model.McpConnectionSnapshot
 import ru.compadre.mcp.mcp.model.McpServerInfo
+import ru.compadre.mcp.mcp.model.McpToolCallRequest
+import ru.compadre.mcp.mcp.model.McpToolCallResult
 import ru.compadre.mcp.mcp.model.McpToolDescriptor
 
 /**
@@ -29,6 +33,27 @@ class DefaultMcpClient : McpClient {
                     endpoint = endpoint,
                     serverInfo = toServerInfo(sdkClient),
                     tools = tools,
+                )
+            } finally {
+                sdkClient.close()
+            }
+        } finally {
+            httpClient.close()
+        }
+    }
+
+    override suspend fun callTool(endpoint: String, request: McpToolCallRequest): McpToolCallResult {
+        val httpClient = createHttpClient()
+
+        try {
+            val sdkClient = createSdkClient(httpClient, endpoint)
+            try {
+                return toToolCallResult(
+                    toolName = request.toolName,
+                    result = sdkClient.callTool(
+                        name = request.toolName,
+                        arguments = request.arguments,
+                    ),
                 )
             } finally {
                 sdkClient.close()
@@ -68,5 +93,16 @@ class DefaultMcpClient : McpClient {
         name = tool.name,
         title = tool.title,
         description = tool.description,
+    )
+
+    internal fun toToolCallResult(toolName: String, result: CallToolResult): McpToolCallResult = McpToolCallResult(
+        toolName = toolName,
+        isError = result.isError == true,
+        content = result.content.map { content ->
+            when (content) {
+                is TextContent -> content.text
+                else -> content.toString()
+            }
+        },
     )
 }
