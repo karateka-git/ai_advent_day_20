@@ -62,4 +62,65 @@ class DefaultAgentTest {
         assertIs<AgentResponse.Failure>(response)
         assertEquals("boom", response.message)
     }
+
+    @Test
+    fun toolCallRequestReturnsNormalizedSuccessResponse() = runBlocking {
+        val agent = DefaultAgent(
+            mcpClient = object : McpClient {
+                override suspend fun connect(endpoint: String): McpConnectionSnapshot {
+                    error("Сценарий connect не должен использоваться в этом тесте.")
+                }
+
+                override suspend fun callTool(endpoint: String, request: McpToolCallRequest): McpToolCallResult =
+                    McpToolCallResult(
+                        toolName = request.toolName,
+                        isError = false,
+                        content = listOf("Публикация #1", "Автор: 1"),
+                    )
+            },
+        )
+
+        val response = agent.handle(
+            AgentRequest.CallTool(
+                endpoint = "http://127.0.0.1:3000/mcp",
+                toolCallRequest = McpToolCallRequest(
+                    toolName = "fetch_post",
+                    arguments = mapOf("postId" to 1),
+                ),
+            ),
+        )
+
+        assertIs<AgentResponse.ToolCallSuccess>(response)
+        assertEquals("http://127.0.0.1:3000/mcp", response.endpoint)
+        assertEquals("fetch_post", response.result.toolName)
+        assertEquals(listOf("Публикация #1", "Автор: 1"), response.result.content)
+    }
+
+    @Test
+    fun toolCallRequestReturnsFailureWhenMcpClientThrows() = runBlocking {
+        val agent = DefaultAgent(
+            mcpClient = object : McpClient {
+                override suspend fun connect(endpoint: String): McpConnectionSnapshot {
+                    error("Сценарий connect не должен использоваться в этом тесте.")
+                }
+
+                override suspend fun callTool(endpoint: String, request: McpToolCallRequest): McpToolCallResult {
+                    error("tool failure")
+                }
+            },
+        )
+
+        val response = agent.handle(
+            AgentRequest.CallTool(
+                endpoint = "http://127.0.0.1:3000/mcp",
+                toolCallRequest = McpToolCallRequest(
+                    toolName = "fetch_post",
+                    arguments = mapOf("postId" to 1),
+                ),
+            ),
+        )
+
+        assertIs<AgentResponse.Failure>(response)
+        assertEquals("tool failure", response.message)
+    }
 }

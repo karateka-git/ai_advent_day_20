@@ -1,6 +1,7 @@
 package ru.compadre.mcp.agent
 
 import ru.compadre.mcp.mcp.model.McpServerInfo
+import ru.compadre.mcp.mcp.model.McpToolCallResult
 import ru.compadre.mcp.mcp.model.McpToolDescriptor
 
 /**
@@ -14,6 +15,14 @@ sealed interface AgentResponse {
         val endpoint: String,
         val serverInfo: McpServerInfo,
         val tools: List<McpToolDescriptor>,
+    ) : AgentResponse
+
+    /**
+     * Успешный результат вызова MCP-инструмента.
+     */
+    data class ToolCallSuccess(
+        val endpoint: String,
+        val result: McpToolCallResult,
     ) : AgentResponse
 
     /**

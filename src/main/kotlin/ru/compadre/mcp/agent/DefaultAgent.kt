@@ -10,6 +10,7 @@ class DefaultAgent(
 ) : Agent {
     override suspend fun handle(request: AgentRequest): AgentResponse = when (request) {
         is AgentRequest.Connect -> handleConnect(request)
+        is AgentRequest.CallTool -> handleCallTool(request)
     }
 
     private suspend fun handleConnect(request: AgentRequest.Connect): AgentResponse =
@@ -24,6 +25,21 @@ class DefaultAgent(
         }.getOrElse { error ->
             AgentResponse.Failure(
                 message = error.message ?: "Не удалось выполнить агентный запрос connect.",
+            )
+        }
+
+    private suspend fun handleCallTool(request: AgentRequest.CallTool): AgentResponse =
+        runCatching {
+            AgentResponse.ToolCallSuccess(
+                endpoint = request.endpoint,
+                result = mcpClient.callTool(
+                    endpoint = request.endpoint,
+                    request = request.toolCallRequest,
+                ),
+            )
+        }.getOrElse { error ->
+            AgentResponse.Failure(
+                message = error.message ?: "Не удалось выполнить агентный запрос callTool.",
             )
         }
 }

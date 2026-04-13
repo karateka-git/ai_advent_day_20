@@ -6,6 +6,8 @@ import kotlin.test.assertIs
 import ru.compadre.mcp.agent.AgentRequest
 import ru.compadre.mcp.agent.AgentResponse
 import ru.compadre.mcp.mcp.model.McpServerInfo
+import ru.compadre.mcp.mcp.model.McpToolCallRequest
+import ru.compadre.mcp.mcp.model.McpToolCallResult
 import ru.compadre.mcp.mcp.model.McpToolDescriptor
 import ru.compadre.mcp.workflow.command.Command
 import ru.compadre.mcp.workflow.command.ConnectCommand
@@ -66,5 +68,38 @@ class ArchitectureContractsTest {
 
         assertIs<AgentRequest.Connect>(request)
         assertEquals("http://127.0.0.1:3000/mcp", request.endpoint)
+    }
+
+    @Test
+    fun agentToolCallRequestKeepsEndpointAndToolPayload() {
+        val request: AgentRequest = AgentRequest.CallTool(
+            endpoint = "http://127.0.0.1:3000/mcp",
+            toolCallRequest = McpToolCallRequest(
+                toolName = "fetch_post",
+                arguments = mapOf("postId" to 1),
+            ),
+        )
+
+        assertIs<AgentRequest.CallTool>(request)
+        assertEquals("http://127.0.0.1:3000/mcp", request.endpoint)
+        assertEquals("fetch_post", request.toolCallRequest.toolName)
+        assertEquals(1, request.toolCallRequest.arguments["postId"])
+    }
+
+    @Test
+    fun agentToolCallResponseKeepsNormalizedMcpData() {
+        val response: AgentResponse = AgentResponse.ToolCallSuccess(
+            endpoint = "http://127.0.0.1:3000/mcp",
+            result = McpToolCallResult(
+                toolName = "fetch_post",
+                isError = false,
+                content = listOf("Публикация #1"),
+            ),
+        )
+
+        assertIs<AgentResponse.ToolCallSuccess>(response)
+        assertEquals("fetch_post", response.result.toolName)
+        assertEquals(false, response.result.isError)
+        assertEquals(listOf("Публикация #1"), response.result.content)
     }
 }

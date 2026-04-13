@@ -44,6 +44,11 @@ class DefaultWorkflowCommandHandler(
                 connected = false,
                 errorMessage = response.message,
             )
+            is AgentResponse.ToolCallSuccess -> ConnectResult(
+                endpoint = endpoint,
+                connected = false,
+                errorMessage = "Агент вернул результат вызова инструмента для сценария connect.",
+            )
         }
     }
 }
