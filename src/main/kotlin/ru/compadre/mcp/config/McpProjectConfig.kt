@@ -1,6 +1,7 @@
 package ru.compadre.mcp.config
 
 import ru.compadre.mcp.agent.bootstrap.models.KnownMcpServer
+import ru.compadre.mcp.agent.bootstrap.models.McpServerId
 
 /**
  * Общие настройки проекта для локального MCP sandbox.
@@ -17,7 +18,7 @@ object McpProjectConfig {
      */
     fun knownMcpServers(): List<KnownMcpServer> = listOf(
         KnownMcpServer(
-            serverId = "local_mcp_server",
+            serverId = McpServerId.LOCAL_MCP_SERVER,
             endpoint = defaultEndpoint(),
         ),
     )

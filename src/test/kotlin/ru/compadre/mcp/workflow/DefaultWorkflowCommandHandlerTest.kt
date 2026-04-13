@@ -8,7 +8,9 @@ import ru.compadre.mcp.agent.Agent
 import ru.compadre.mcp.agent.AgentRequest
 import ru.compadre.mcp.agent.AgentResponse
 import ru.compadre.mcp.agent.bootstrap.models.AgentCapabilitySnapshot
+import ru.compadre.mcp.agent.bootstrap.models.AgentCommandId
 import ru.compadre.mcp.agent.bootstrap.models.AvailableAgentCommand
+import ru.compadre.mcp.agent.bootstrap.models.McpServerId
 import ru.compadre.mcp.mcp.toolcall.models.McpToolCallResult
 import ru.compadre.mcp.workflow.command.PrepareAgentCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand
@@ -29,11 +31,11 @@ class DefaultWorkflowCommandHandlerTest {
                         snapshot = AgentCapabilitySnapshot(
                             availableCommands = listOf(
                                 AvailableAgentCommand(
-                                    commandId = "tool.posts",
+                                    commandId = AgentCommandId.TOOL_POSTS,
                                     cliPattern = "tool posts",
                                     description = "Показать первые 10 публикаций.",
                                     toolName = "list_posts",
-                                    serverId = "local_mcp_server",
+                                    serverId = McpServerId.LOCAL_MCP_SERVER,
                                     endpoint = "http://127.0.0.1:3000/mcp",
                                 ),
                             ),
@@ -73,7 +75,7 @@ class DefaultWorkflowCommandHandlerTest {
             agent = object : Agent {
                 override suspend fun handle(request: AgentRequest): AgentResponse {
                     val toolRequest = request as AgentRequest.CallAvailableCommand
-                    assertEquals("tool.post", toolRequest.commandId)
+                    assertEquals(AgentCommandId.TOOL_POST, toolRequest.commandId)
                     assertEquals(1, toolRequest.arguments["postId"])
 
                     return AgentResponse.ToolCallSuccess(
@@ -119,7 +121,7 @@ class DefaultWorkflowCommandHandlerTest {
             agent = object : Agent {
                 override suspend fun handle(request: AgentRequest): AgentResponse {
                     val toolRequest = request as AgentRequest.CallAvailableCommand
-                    assertEquals("tool.posts", toolRequest.commandId)
+                    assertEquals(AgentCommandId.TOOL_POSTS, toolRequest.commandId)
                     assertEquals(emptyMap(), toolRequest.arguments)
 
                     return AgentResponse.ToolCallSuccess(

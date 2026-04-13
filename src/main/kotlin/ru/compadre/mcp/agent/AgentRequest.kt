@@ -1,5 +1,6 @@
 package ru.compadre.mcp.agent
 
+import ru.compadre.mcp.agent.bootstrap.models.AgentCommandId
 import ru.compadre.mcp.agent.bootstrap.models.KnownMcpServer
 import ru.compadre.mcp.mcp.toolcall.models.McpToolCallRequest
 
@@ -25,7 +26,7 @@ sealed interface AgentRequest {
      * Запрос агенту на вызов прикладной команды через capability-реестр.
      */
     data class CallAvailableCommand(
-        val commandId: String,
+        val commandId: AgentCommandId,
         val arguments: Map<String, Any?> = emptyMap(),
     ) : AgentRequest
 

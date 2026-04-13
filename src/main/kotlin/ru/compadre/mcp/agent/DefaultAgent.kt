@@ -3,6 +3,7 @@ package ru.compadre.mcp.agent
 import ru.compadre.mcp.agent.bootstrap.AgentCapabilityRegistry
 import ru.compadre.mcp.agent.bootstrap.commands.AvailableAgentCommandResolver
 import ru.compadre.mcp.agent.bootstrap.models.AgentCapabilitySnapshot
+import ru.compadre.mcp.agent.bootstrap.models.AgentCommandId
 import ru.compadre.mcp.agent.bootstrap.models.KnownMcpServer
 import ru.compadre.mcp.agent.bootstrap.models.PreparedMcpServer
 import ru.compadre.mcp.mcp.client.McpClient
@@ -106,16 +107,16 @@ class DefaultAgent(
                 serverId = server.serverId,
                 endpoint = server.endpoint,
                 prepared = false,
-                errorMessage = error.message ?: "Не удалось подготовить MCP-сервер `${server.serverId}`.",
+                errorMessage = error.message ?: "Не удалось подготовить MCP-сервер `${server.serverId.value}`.",
             )
         }
 
     private fun unavailableCommandMessage(
-        commandId: String,
+        commandId: AgentCommandId,
         capabilitySnapshot: AgentCapabilitySnapshot,
     ): String = if (capabilitySnapshot.servers.isEmpty()) {
-        "Команда `$commandId` недоступна: агент ещё не подготовил MCP-возможности."
+        "Команда `${commandId.value()}` недоступна: агент ещё не подготовил MCP-возможности."
     } else {
-        "Команда `$commandId` недоступна: агент не нашёл для неё подходящий MCP-инструмент."
+        "Команда `${commandId.value()}` недоступна: агент не нашёл для неё подходящий MCP-инструмент."
     }
 }

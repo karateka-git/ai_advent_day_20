@@ -1,5 +1,6 @@
 package ru.compadre.mcp.agent.bootstrap
 
+import ru.compadre.mcp.agent.bootstrap.models.AgentCommandId
 import ru.compadre.mcp.agent.bootstrap.models.AgentCapabilitySnapshot
 
 /**
@@ -25,6 +26,6 @@ class AgentCapabilityRegistry(
     /**
      * Возвращает доступную пользователю команду по её стабильному идентификатору.
      */
-    fun availableCommand(commandId: String) = currentSnapshot.availableCommands
+    fun availableCommand(commandId: AgentCommandId) = currentSnapshot.availableCommands
         .firstOrNull { command -> command.commandId == commandId }
 }

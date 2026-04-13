@@ -3,6 +3,7 @@ package ru.compadre.mcp.workflow.service
 import ru.compadre.mcp.agent.Agent
 import ru.compadre.mcp.agent.AgentRequest
 import ru.compadre.mcp.agent.AgentResponse
+import ru.compadre.mcp.agent.bootstrap.models.AgentCommandId
 import ru.compadre.mcp.config.McpProjectConfig
 import ru.compadre.mcp.workflow.command.Command
 import ru.compadre.mcp.workflow.command.PrepareAgentCommand
@@ -65,7 +66,7 @@ class DefaultWorkflowCommandHandler(
         return when (
             val response = agent.handle(
                 AgentRequest.CallAvailableCommand(
-                    commandId = "tool.post",
+                    commandId = AgentCommandId.TOOL_POST,
                     arguments = mapOf("postId" to command.postId),
                 ),
             )
@@ -107,7 +108,7 @@ class DefaultWorkflowCommandHandler(
         return when (
             val response = agent.handle(
                 AgentRequest.CallAvailableCommand(
-                    commandId = "tool.posts",
+                    commandId = AgentCommandId.TOOL_POSTS,
                 ),
             )
         ) {

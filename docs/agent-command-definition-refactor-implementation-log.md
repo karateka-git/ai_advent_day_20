@@ -100,3 +100,53 @@
 Следующий шаг:
 
 - перейти к `Этапу 3` и заменить строковые `commandId` и `serverId` на типизированные идентификаторы с явным routing у command definitions.
+
+## Этап 3. Типизация `commandId` и `serverId` и явный routing
+
+Статус: завершён
+
+Цель этапа:
+
+- убрать raw string `commandId` и `serverId` из capability-потока;
+- сделать правило выбора сервера явной частью command definition.
+
+Выполненные действия:
+
+1. Добавлены новые типизированные модели:
+   - [AgentCommandId.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/src/main/kotlin/ru/compadre/mcp/agent/bootstrap/models/AgentCommandId.kt)
+   - [McpServerId.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/src/main/kotlin/ru/compadre/mcp/agent/bootstrap/models/McpServerId.kt)
+2. Введена модель routing policy:
+   - [CommandRouting.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/src/main/kotlin/ru/compadre/mcp/agent/bootstrap/commands/models/CommandRouting.kt)
+3. Capability-модели переведены на типизированные идентификаторы:
+   - `AvailableAgentCommand.commandId`
+   - `AvailableAgentCommand.serverId`
+   - `KnownMcpServer.serverId`
+   - `PreparedMcpServer.serverId`
+4. `AgentRequest.CallAvailableCommand` и `AgentCapabilityRegistry.availableCommand(...)` переведены на `AgentCommandId`.
+5. `ToolBasedAgentCommandDefinition` теперь требует `routing` и разрешает команду через него, а не через неявный поиск первого подходящего сервера.
+6. `ToolPostAgentCommandDefinition` и `ToolPostsAgentCommandDefinition` закреплены за `CommandRouting.FixedServer(McpServerId.LOCAL_MCP_SERVER)`.
+7. [McpProjectConfig.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/src/main/kotlin/ru/compadre/mcp/config/McpProjectConfig.kt) теперь создаёт known servers с `McpServerId.LOCAL_MCP_SERVER`.
+8. [DefaultWorkflowCommandHandler.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/src/main/kotlin/ru/compadre/mcp/workflow/service/DefaultWorkflowCommandHandler.kt) переведён на `AgentCommandId.TOOL_POST` и `AgentCommandId.TOOL_POSTS`.
+9. [DefaultAgent.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/src/main/kotlin/ru/compadre/mcp/agent/DefaultAgent.kt) обновлён под типизированные id и формирует прикладные error messages через стабильное строковое представление `AgentCommandId`.
+10. Обновлены unit-тесты под новые типы и новое routing-поведение.
+11. Выполнен прогон `.\gradlew.bat test`.
+
+Принятые решения:
+
+- использовать `enum class AgentCommandId` для фиксированного набора пользовательских команд;
+- использовать `@JvmInline value class McpServerId` для typed server id без жёсткого ограничения только enum-значениями;
+- на текущем проходе закрепить команды за `FixedServer`, чтобы перенос команды на другой сервер менялся в одном месте — внутри её definition.
+
+Проверка:
+
+- в agent/workflow capability-потоке больше нет raw string `commandId`;
+- definitions используют явный `routing`;
+- `.\gradlew.bat test` завершается успешно.
+
+Коммиты этапа:
+
+- текущий коммит этапа — типизация id и внедрение явного routing для command definitions.
+
+Следующий шаг:
+
+- перейти к `Этапу 4` и добить интеграцию, локальные тесты и финальную фиксацию журнала этого ТЗ.

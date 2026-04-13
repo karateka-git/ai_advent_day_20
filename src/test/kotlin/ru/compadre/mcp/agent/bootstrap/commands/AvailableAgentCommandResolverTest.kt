@@ -2,6 +2,8 @@ package ru.compadre.mcp.agent.bootstrap.commands
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import ru.compadre.mcp.agent.bootstrap.models.AgentCommandId
+import ru.compadre.mcp.agent.bootstrap.models.McpServerId
 import ru.compadre.mcp.agent.bootstrap.models.PreparedMcpServer
 import ru.compadre.mcp.mcp.client.model.McpToolDescriptor
 
@@ -15,7 +17,7 @@ class AvailableAgentCommandResolverTest {
         val result = resolver.resolve(
             servers = listOf(
                 PreparedMcpServer(
-                    serverId = "local_mcp_server",
+                    serverId = McpServerId.LOCAL_MCP_SERVER,
                     endpoint = "http://127.0.0.1:3000/mcp",
                     prepared = true,
                     tools = listOf(
@@ -27,7 +29,7 @@ class AvailableAgentCommandResolverTest {
         )
 
         assertEquals(2, result.size)
-        assertEquals("tool.posts", result.first().commandId)
+        assertEquals(AgentCommandId.TOOL_POSTS, result.first().commandId)
         assertEquals("tool post <postId>", result.last().cliPattern)
     }
 
@@ -40,7 +42,7 @@ class AvailableAgentCommandResolverTest {
         val result = resolver.resolve(
             servers = listOf(
                 PreparedMcpServer(
-                    serverId = "local_mcp_server",
+                    serverId = McpServerId.LOCAL_MCP_SERVER,
                     endpoint = "http://127.0.0.1:3000/mcp",
                     prepared = true,
                     tools = listOf(
@@ -51,6 +53,6 @@ class AvailableAgentCommandResolverTest {
         )
 
         assertEquals(1, result.size)
-        assertEquals("tool.post", result.single().commandId)
+        assertEquals(AgentCommandId.TOOL_POST, result.single().commandId)
     }
 }

@@ -7,7 +7,7 @@ import ru.compadre.mcp.mcp.client.model.McpToolDescriptor
  * Результат подготовки одного MCP-сервера внутри capability-модели агента.
  */
 data class PreparedMcpServer(
-    val serverId: String,
+    val serverId: McpServerId,
     val endpoint: String,
     val prepared: Boolean,
     val serverInfo: McpServerInfo? = null,

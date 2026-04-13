@@ -6,7 +6,9 @@ import kotlin.test.assertIs
 import ru.compadre.mcp.agent.AgentRequest
 import ru.compadre.mcp.agent.AgentResponse
 import ru.compadre.mcp.agent.bootstrap.models.AgentCapabilitySnapshot
+import ru.compadre.mcp.agent.bootstrap.models.AgentCommandId
 import ru.compadre.mcp.agent.bootstrap.models.KnownMcpServer
+import ru.compadre.mcp.agent.bootstrap.models.McpServerId
 import ru.compadre.mcp.agent.bootstrap.models.PreparedMcpServer
 import ru.compadre.mcp.mcp.client.model.McpServerInfo
 import ru.compadre.mcp.mcp.client.model.McpToolDescriptor
@@ -110,7 +112,7 @@ class ArchitectureContractsTest {
         val request: AgentRequest = AgentRequest.Prepare(
             servers = listOf(
                 KnownMcpServer(
-                    serverId = "local_mcp_server",
+                    serverId = McpServerId.LOCAL_MCP_SERVER,
                     endpoint = "http://127.0.0.1:3000/mcp",
                 ),
             ),
@@ -118,18 +120,18 @@ class ArchitectureContractsTest {
 
         assertIs<AgentRequest.Prepare>(request)
         assertEquals(1, request.servers.size)
-        assertEquals("local_mcp_server", request.servers.single().serverId)
+        assertEquals(McpServerId.LOCAL_MCP_SERVER, request.servers.single().serverId)
     }
 
     @Test
     fun agentAvailableCommandRequestKeepsCommandIdAndArguments() {
         val request: AgentRequest = AgentRequest.CallAvailableCommand(
-            commandId = "tool.post",
+            commandId = AgentCommandId.TOOL_POST,
             arguments = mapOf("postId" to 1),
         )
 
         assertIs<AgentRequest.CallAvailableCommand>(request)
-        assertEquals("tool.post", request.commandId)
+        assertEquals(AgentCommandId.TOOL_POST, request.commandId)
         assertEquals(1, request.arguments["postId"])
     }
 
@@ -172,7 +174,7 @@ class ArchitectureContractsTest {
             snapshot = AgentCapabilitySnapshot(
                 servers = listOf(
                     PreparedMcpServer(
-                        serverId = "local_mcp_server",
+                        serverId = McpServerId.LOCAL_MCP_SERVER,
                         endpoint = "http://127.0.0.1:3000/mcp",
                         prepared = true,
                     ),

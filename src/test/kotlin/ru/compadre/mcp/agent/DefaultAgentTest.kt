@@ -5,7 +5,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import ru.compadre.mcp.agent.bootstrap.AgentCapabilityRegistry
+import ru.compadre.mcp.agent.bootstrap.models.AgentCommandId
 import ru.compadre.mcp.agent.bootstrap.models.KnownMcpServer
+import ru.compadre.mcp.agent.bootstrap.models.McpServerId
 import ru.compadre.mcp.mcp.client.McpClient
 import ru.compadre.mcp.mcp.client.model.McpConnectionSnapshot
 import ru.compadre.mcp.mcp.client.model.McpServerInfo
@@ -43,7 +45,7 @@ class DefaultAgentTest {
             AgentRequest.Prepare(
                 servers = listOf(
                     KnownMcpServer(
-                        serverId = "local_mcp_server",
+                        serverId = McpServerId.LOCAL_MCP_SERVER,
                         endpoint = "http://127.0.0.1:3000/mcp",
                     ),
                 ),
@@ -91,11 +93,11 @@ class DefaultAgentTest {
             AgentRequest.Prepare(
                 servers = listOf(
                     KnownMcpServer(
-                        serverId = "healthy",
+                        serverId = McpServerId.LOCAL_MCP_SERVER,
                         endpoint = "http://127.0.0.1:3000/mcp",
                     ),
                     KnownMcpServer(
-                        serverId = "broken",
+                        serverId = McpServerId("broken"),
                         endpoint = "http://127.0.0.1:3999/mcp-broken",
                     ),
                 ),
@@ -147,7 +149,7 @@ class DefaultAgentTest {
             AgentRequest.Prepare(
                 servers = listOf(
                     KnownMcpServer(
-                        serverId = "local_mcp_server",
+                        serverId = McpServerId.LOCAL_MCP_SERVER,
                         endpoint = "http://127.0.0.1:3000/mcp",
                     ),
                 ),
@@ -156,7 +158,7 @@ class DefaultAgentTest {
 
         val response = agent.handle(
             AgentRequest.CallAvailableCommand(
-                commandId = "tool.post",
+                commandId = AgentCommandId.TOOL_POST,
                 arguments = mapOf("postId" to 7),
             ),
         )
@@ -183,7 +185,7 @@ class DefaultAgentTest {
 
         val response = agent.handle(
             AgentRequest.CallAvailableCommand(
-                commandId = "tool.posts",
+                commandId = AgentCommandId.TOOL_POSTS,
             ),
         )
 
