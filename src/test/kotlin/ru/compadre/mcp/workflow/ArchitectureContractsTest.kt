@@ -11,9 +11,11 @@ import ru.compadre.mcp.mcp.model.McpToolCallResult
 import ru.compadre.mcp.mcp.model.McpToolDescriptor
 import ru.compadre.mcp.workflow.command.Command
 import ru.compadre.mcp.workflow.command.ConnectCommand
+import ru.compadre.mcp.workflow.command.ToolPostCommand
 import ru.compadre.mcp.workflow.result.CommandResult
 import ru.compadre.mcp.workflow.result.ConnectResult
 import ru.compadre.mcp.workflow.result.ConnectToolResult
+import ru.compadre.mcp.workflow.result.ToolCallResult
 
 class ArchitectureContractsTest {
     @Test
@@ -38,6 +40,33 @@ class ArchitectureContractsTest {
         assertIs<ConnectResult>(result)
         assertEquals(true, result.connected)
         assertEquals(1, result.tools.size)
+    }
+
+    @Test
+    fun toolPostCommandImplementsBaseCommandContract() {
+        val command: Command = ToolPostCommand(
+            endpointOverride = "http://localhost:3000/mcp",
+            postId = 1,
+        )
+
+        assertIs<ToolPostCommand>(command)
+        assertEquals("http://localhost:3000/mcp", command.endpointOverride)
+        assertEquals(1, command.postId)
+    }
+
+    @Test
+    fun toolCallResultImplementsBaseCommandResultContract() {
+        val result: CommandResult = ToolCallResult(
+            endpoint = "http://127.0.0.1:3000/mcp",
+            toolName = "fetch_post",
+            successful = true,
+            content = listOf("Публикация #1"),
+        )
+
+        assertIs<ToolCallResult>(result)
+        assertEquals(true, result.successful)
+        assertEquals("fetch_post", result.toolName)
+        assertEquals(listOf("Публикация #1"), result.content)
     }
 
     @Test

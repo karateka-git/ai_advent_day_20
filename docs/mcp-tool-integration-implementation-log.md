@@ -196,3 +196,51 @@
 Следующий шаг:
 
 - перейти к `Этапу 5` и встроить вызов инструмента в `workflow`-слой.
+
+## Этап 5. Интеграция С Workflow
+
+Статус: завершён
+
+Цель этапа:
+
+- встроить вызов инструмента в `workflow`-слой;
+- добавить отдельную workflow-команду и workflow-result для нового сценария;
+- подтвердить тестами преобразование `workflow -> agent -> workflow result`.
+
+Выполненные действия:
+
+1. Для `Этапа 5` в `docs/mcp-tool-integration-spec.md` добавлены подэтапы внедрения.
+2. В `workflow/command` добавлена новая команда `ToolPostCommand`.
+3. В `workflow/result` добавлен новый результат `ToolCallResult`.
+4. `DefaultWorkflowCommandHandler` расширен новым сценарием:
+   - преобразует `ToolPostCommand` в `AgentRequest.CallTool`;
+   - вызывает инструмент `fetch_post`;
+   - преобразует `AgentResponse.ToolCallSuccess` в `ToolCallResult`;
+   - преобразует `AgentResponse.Failure` в неуспешный `ToolCallResult`.
+5. В `DefaultWorkflowCommandHandlerTest` добавлены unit-тесты:
+   - на успешный workflow-сценарий вызова инструмента;
+   - на ошибочный workflow-сценарий вызова инструмента.
+6. В `ArchitectureContractsTest` добавлены проверки на сохранение новых workflow-контрактов.
+7. Выполнен прогон `.\gradlew.bat test`.
+
+Принятые решения:
+
+- на этапе `workflow` закрепить пользовательский вертикальный срез как `ToolPostCommand`, не пытаясь преждевременно строить общий DSL для всех инструментов;
+- при этом agent-layer оставить generic, а workflow-layer сделать ответственным за привязку конкретной команды приложения к инструменту `fetch_post`;
+- в неуспешном `ToolCallResult` хранить одно итоговое сообщение ошибки, а не пытаться на этом этапе строить отдельную иерархию ошибок.
+
+Проверка:
+
+- `DefaultWorkflowCommandHandler` теперь обрабатывает `ToolPostCommand`;
+- успешный workflow-flow возвращает `ToolCallResult` с содержимым результата инструмента;
+- агентная ошибка преобразуется в неуспешный `ToolCallResult`;
+- `.\gradlew.bat test` завершается успешно.
+
+Коммиты этапа:
+
+- `36c51ca` — детализация этапа 5 в ТЗ;
+- текущий коммит этапа — интеграция вызова инструмента в workflow-слой, тестами и записью результата в implementation log.
+
+Следующий шаг:
+
+- перейти к `Этапу 6` и сделать вызов инструмента доступным из CLI presentation-слоя.

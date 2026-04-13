@@ -2,6 +2,7 @@ package ru.compadre.mcp.presentation.cli
 
 import ru.compadre.mcp.workflow.result.CommandResult
 import ru.compadre.mcp.workflow.result.ConnectResult
+import ru.compadre.mcp.workflow.result.ToolCallResult
 
 /**
  * Стандартный форматтер workflow-результатов для CLI.
@@ -9,6 +10,7 @@ import ru.compadre.mcp.workflow.result.ConnectResult
 class DefaultCliOutputFormatter : CliOutputFormatter {
     override fun format(result: CommandResult): String = when (result) {
         is ConnectResult -> formatConnectResult(result)
+        is ToolCallResult -> formatUnsupportedToolCallResult(result)
     }
 
     private fun formatConnectResult(result: ConnectResult): String {
@@ -40,4 +42,11 @@ class DefaultCliOutputFormatter : CliOutputFormatter {
 
         return lines.joinToString(separator = System.lineSeparator())
     }
+
+    private fun formatUnsupportedToolCallResult(result: ToolCallResult): String = buildList {
+        add("Результат вызова инструмента `${result.toolName}` пока не поддержан в CLI formatter.")
+        if (result.errorMessage != null) {
+            add("Ошибка: ${result.errorMessage}")
+        }
+    }.joinToString(separator = System.lineSeparator())
 }
