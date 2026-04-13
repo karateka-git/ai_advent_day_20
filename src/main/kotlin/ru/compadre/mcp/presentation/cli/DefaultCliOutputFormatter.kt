@@ -10,7 +10,7 @@ import ru.compadre.mcp.workflow.result.ToolCallResult
 class DefaultCliOutputFormatter : CliOutputFormatter {
     override fun format(result: CommandResult): String = when (result) {
         is ConnectResult -> formatConnectResult(result)
-        is ToolCallResult -> formatUnsupportedToolCallResult(result)
+        is ToolCallResult -> formatToolCallResult(result)
     }
 
     private fun formatConnectResult(result: ConnectResult): String {
@@ -43,10 +43,17 @@ class DefaultCliOutputFormatter : CliOutputFormatter {
         return lines.joinToString(separator = System.lineSeparator())
     }
 
-    private fun formatUnsupportedToolCallResult(result: ToolCallResult): String = buildList {
-        add("Результат вызова инструмента `${result.toolName}` пока не поддержан в CLI formatter.")
-        if (result.errorMessage != null) {
-            add("Ошибка: ${result.errorMessage}")
+    private fun formatToolCallResult(result: ToolCallResult): String {
+        if (!result.successful) {
+            return buildList {
+                add("Не удалось выполнить инструмент `${result.toolName}` через MCP: ${result.endpoint}")
+                add("Ошибка: ${result.errorMessage ?: "<неизвестно>"}")
+            }.joinToString(separator = System.lineSeparator())
         }
-    }.joinToString(separator = System.lineSeparator())
+
+        return buildList {
+            add("Инструмент `${result.toolName}` выполнен успешно: ${result.endpoint}")
+            addAll(result.content)
+        }.joinToString(separator = System.lineSeparator())
+    }
 }

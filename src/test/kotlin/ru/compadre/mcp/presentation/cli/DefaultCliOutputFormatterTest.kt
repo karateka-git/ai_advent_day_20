@@ -4,6 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import ru.compadre.mcp.workflow.result.ConnectResult
 import ru.compadre.mcp.workflow.result.ConnectToolResult
+import ru.compadre.mcp.workflow.result.ToolCallResult
 
 class DefaultCliOutputFormatterTest {
     private val formatter = DefaultCliOutputFormatter()
@@ -56,6 +57,46 @@ class DefaultCliOutputFormatterTest {
         val expected = listOf(
             "Не удалось подключиться к MCP-серверу: http://127.0.0.1:3000/mcp",
             "Ошибка: boom",
+        ).joinToString(System.lineSeparator())
+
+        assertEquals(expected, formatter.format(result))
+    }
+
+    @Test
+    fun formatRendersSuccessfulToolCallResult() {
+        val result = ToolCallResult(
+            endpoint = "http://127.0.0.1:3000/mcp",
+            toolName = "fetch_post",
+            successful = true,
+            content = listOf(
+                "Публикация #1",
+                "Автор: 1",
+                "Заголовок: Тестовый заголовок",
+            ),
+        )
+
+        val expected = listOf(
+            "Инструмент `fetch_post` выполнен успешно: http://127.0.0.1:3000/mcp",
+            "Публикация #1",
+            "Автор: 1",
+            "Заголовок: Тестовый заголовок",
+        ).joinToString(System.lineSeparator())
+
+        assertEquals(expected, formatter.format(result))
+    }
+
+    @Test
+    fun formatRendersFailedToolCallResult() {
+        val result = ToolCallResult(
+            endpoint = "http://127.0.0.1:3000/mcp",
+            toolName = "fetch_post",
+            successful = false,
+            errorMessage = "Публикация не найдена.",
+        )
+
+        val expected = listOf(
+            "Не удалось выполнить инструмент `fetch_post` через MCP: http://127.0.0.1:3000/mcp",
+            "Ошибка: Публикация не найдена.",
         ).joinToString(System.lineSeparator())
 
         assertEquals(expected, formatter.format(result))

@@ -67,7 +67,7 @@ private suspend fun runInteractiveShell(
     outputFormatter: CliOutputFormatter,
 ) {
     println("MCP-клиент готов к работе.")
-    println("Доступные команды: connect, help, exit")
+    println("Доступные команды: connect, tool post <postId>, help, exit")
 
     while (true) {
         print("> ")
@@ -90,7 +90,7 @@ private suspend fun runInteractiveShell(
             }
 
             "help" -> {
-                println("Доступные команды: connect, help, exit")
+                println("Доступные команды: connect, tool post <postId>, help, exit")
                 continue
             }
         }
