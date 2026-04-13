@@ -9,6 +9,12 @@
 - пройти сценарий `initialize -> tools/list`;
 - вывести серверную информацию и список доступных инструментов.
 
+Следующий зафиксированный сценарий развития:
+
+- добавить прикладной MCP-инструмент `fetch_post`;
+- вызывать его через пользовательскую команду `tool post <postId>`;
+- получать данные публикации из mock API `JSONPlaceholder`.
+
 ## Что Внутри
 
 - локальный MCP server на Kotlin/Ktor;
@@ -146,3 +152,5 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -Headl
 - журнал реализации MCP reference-части: [docs/mcp-reference-implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/docs/mcp-reference-implementation-log.md)
 - ТЗ по агентной архитектуре: [docs/agent-architecture-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/docs/agent-architecture-spec.md)
 - журнал реализации агентной архитектуры: [docs/agent-architecture-implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/docs/agent-architecture-implementation-log.md)
+- ТЗ по интеграции MCP tool: [docs/mcp-tool-integration-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/docs/mcp-tool-integration-spec.md)
+- контракт первого MCP tool: [docs/mcp-tool-integration-contract.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/docs/mcp-tool-integration-contract.md)

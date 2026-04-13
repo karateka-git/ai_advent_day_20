@@ -14,6 +14,13 @@
 - выполнить lifecycle `initialize -> tools/list`;
 - вывести список доступных инструментов.
 
+Текущий следующий vertical slice:
+
+- добавить первый прикладной MCP tool `fetch_post`;
+- получать данные из mock API `JSONPlaceholder`;
+- сделать пользовательскую команду `tool post <postId>`;
+- провести результат вызова через цепочку `presentation -> workflow -> agent -> mcp`.
+
 Что уже зафиксировано в проекте:
 
 - локальный endpoint по умолчанию: `http://127.0.0.1:3000/mcp`;
