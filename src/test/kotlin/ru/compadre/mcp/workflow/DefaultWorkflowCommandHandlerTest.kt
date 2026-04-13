@@ -7,52 +7,52 @@ import kotlin.test.assertIs
 import ru.compadre.mcp.agent.Agent
 import ru.compadre.mcp.agent.AgentRequest
 import ru.compadre.mcp.agent.AgentResponse
-import ru.compadre.mcp.mcp.client.model.McpServerInfo
-import ru.compadre.mcp.mcp.client.model.McpToolDescriptor
+import ru.compadre.mcp.agent.bootstrap.models.AgentCapabilitySnapshot
+import ru.compadre.mcp.agent.bootstrap.models.AvailableAgentCommand
 import ru.compadre.mcp.mcp.toolcall.models.McpToolCallResult
-import ru.compadre.mcp.workflow.command.ConnectCommand
+import ru.compadre.mcp.workflow.command.PrepareAgentCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand
 import ru.compadre.mcp.workflow.command.ToolPostsCommand
-import ru.compadre.mcp.workflow.result.ConnectResult
+import ru.compadre.mcp.workflow.result.AgentPreparationResult
 import ru.compadre.mcp.workflow.result.ToolCallResult
 import ru.compadre.mcp.workflow.service.DefaultWorkflowCommandHandler
 
 class DefaultWorkflowCommandHandlerTest {
     @Test
-    fun connectCommandReturnsSuccessfulConnectResult() = runBlocking {
+    fun prepareAgentCommandReturnsSuccessfulPreparationResult() = runBlocking {
         val handler = DefaultWorkflowCommandHandler(
             agent = object : Agent {
                 override suspend fun handle(request: AgentRequest): AgentResponse {
-                    val connectRequest = request as AgentRequest.Connect
-                    return AgentResponse.ConnectSuccess(
-                        endpoint = connectRequest.endpoint,
-                        serverInfo = McpServerInfo(
-                            name = "local_mcp_server",
-                            version = "0.1.0",
-                            title = "Local MCP Server",
-                            instructions = "Локальный MCP server для sandbox-проекта.",
-                        ),
-                        tools = listOf(
-                            McpToolDescriptor(name = "ping", title = "Ping"),
-                            McpToolDescriptor(name = "echo", title = "Echo"),
+                    assertIs<AgentRequest.Prepare>(request)
+
+                    return AgentResponse.PreparationSuccess(
+                        snapshot = AgentCapabilitySnapshot(
+                            availableCommands = listOf(
+                                AvailableAgentCommand(
+                                    commandId = "tool.posts",
+                                    cliPattern = "tool posts",
+                                    description = "Показать первые 10 публикаций.",
+                                    toolName = "list_posts",
+                                    serverId = "local_mcp_server",
+                                    endpoint = "http://127.0.0.1:3000/mcp",
+                                ),
+                            ),
                         ),
                     )
                 }
             },
         )
 
-        val result = handler.handle(
-            ConnectCommand(endpointOverride = "http://127.0.0.1:3000/mcp"),
-        )
+        val result = handler.handle(PrepareAgentCommand)
 
-        assertIs<ConnectResult>(result)
-        assertEquals(true, result.connected)
-        assertEquals("local_mcp_server", result.serverName)
-        assertEquals(2, result.tools.size)
+        assertIs<AgentPreparationResult>(result)
+        assertEquals(true, result.prepared)
+        assertEquals(1, result.availableCommands.size)
+        assertEquals("tool posts", result.availableCommands.single().pattern)
     }
 
     @Test
-    fun connectCommandReturnsFailureResultWhenAgentFails() = runBlocking {
+    fun prepareAgentCommandReturnsFailureResultWhenAgentFails() = runBlocking {
         val handler = DefaultWorkflowCommandHandler(
             agent = object : Agent {
                 override suspend fun handle(request: AgentRequest): AgentResponse =
@@ -60,27 +60,24 @@ class DefaultWorkflowCommandHandlerTest {
             },
         )
 
-        val result = handler.handle(
-            ConnectCommand(endpointOverride = "http://127.0.0.1:3000/mcp"),
-        )
+        val result = handler.handle(PrepareAgentCommand)
 
-        assertIs<ConnectResult>(result)
-        assertEquals(false, result.connected)
+        assertIs<AgentPreparationResult>(result)
+        assertEquals(false, result.prepared)
         assertEquals("agent failure", result.errorMessage)
-        assertEquals("http://127.0.0.1:3000/mcp", result.endpoint)
     }
 
     @Test
-    fun toolPostCommandReturnsSuccessfulToolCallResult() = runBlocking {
+    fun toolPostCommandUsesAvailableCommandRouting() = runBlocking {
         val handler = DefaultWorkflowCommandHandler(
             agent = object : Agent {
                 override suspend fun handle(request: AgentRequest): AgentResponse {
-                    val toolRequest = request as AgentRequest.CallTool
-                    assertEquals("fetch_post", toolRequest.toolCallRequest.toolName)
-                    assertEquals(1, toolRequest.toolCallRequest.arguments["postId"])
+                    val toolRequest = request as AgentRequest.CallAvailableCommand
+                    assertEquals("tool.post", toolRequest.commandId)
+                    assertEquals(1, toolRequest.arguments["postId"])
 
                     return AgentResponse.ToolCallSuccess(
-                        endpoint = toolRequest.endpoint,
+                        endpoint = "http://127.0.0.1:3000/mcp",
                         result = McpToolCallResult(
                             toolName = "fetch_post",
                             isError = false,
@@ -91,16 +88,11 @@ class DefaultWorkflowCommandHandlerTest {
             },
         )
 
-        val result = handler.handle(
-            ToolPostCommand(
-                endpointOverride = "http://127.0.0.1:3000/mcp",
-                postId = 1,
-            ),
-        )
+        val result = handler.handle(ToolPostCommand(postId = 1))
 
         assertIs<ToolCallResult>(result)
         assertEquals(true, result.successful)
-        assertEquals("fetch_post", result.toolName)
+        assertEquals("tool post 1", result.commandText)
         assertEquals(listOf("Публикация #1", "Автор: 1"), result.content)
     }
 
@@ -113,31 +105,25 @@ class DefaultWorkflowCommandHandlerTest {
             },
         )
 
-        val result = handler.handle(
-            ToolPostCommand(
-                endpointOverride = "http://127.0.0.1:3000/mcp",
-                postId = 1,
-            ),
-        )
+        val result = handler.handle(ToolPostCommand(postId = 1))
 
         assertIs<ToolCallResult>(result)
         assertEquals(false, result.successful)
         assertEquals("tool agent failure", result.errorMessage)
-        assertEquals("fetch_post", result.toolName)
-        assertEquals("http://127.0.0.1:3000/mcp", result.endpoint)
+        assertEquals("tool post 1", result.commandText)
     }
 
     @Test
-    fun toolPostsCommandReturnsSuccessfulToolCallResult() = runBlocking {
+    fun toolPostsCommandUsesAvailableCommandRouting() = runBlocking {
         val handler = DefaultWorkflowCommandHandler(
             agent = object : Agent {
                 override suspend fun handle(request: AgentRequest): AgentResponse {
-                    val toolRequest = request as AgentRequest.CallTool
-                    assertEquals("list_posts", toolRequest.toolCallRequest.toolName)
-                    assertEquals(emptyMap(), toolRequest.toolCallRequest.arguments)
+                    val toolRequest = request as AgentRequest.CallAvailableCommand
+                    assertEquals("tool.posts", toolRequest.commandId)
+                    assertEquals(emptyMap(), toolRequest.arguments)
 
                     return AgentResponse.ToolCallSuccess(
-                        endpoint = toolRequest.endpoint,
+                        endpoint = "http://127.0.0.1:3000/mcp",
                         result = McpToolCallResult(
                             toolName = "list_posts",
                             isError = false,
@@ -148,15 +134,11 @@ class DefaultWorkflowCommandHandlerTest {
             },
         )
 
-        val result = handler.handle(
-            ToolPostsCommand(
-                endpointOverride = "http://127.0.0.1:3000/mcp",
-            ),
-        )
+        val result = handler.handle(ToolPostsCommand)
 
         assertIs<ToolCallResult>(result)
         assertEquals(true, result.successful)
-        assertEquals("list_posts", result.toolName)
+        assertEquals("tool posts", result.commandText)
         assertEquals(listOf("Первые 10 публикаций:", "1. sunt aut facere"), result.content)
     }
 }

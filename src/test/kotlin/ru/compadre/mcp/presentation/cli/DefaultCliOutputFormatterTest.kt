@@ -2,70 +2,48 @@ package ru.compadre.mcp.presentation.cli
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import ru.compadre.mcp.workflow.result.ConnectResult
-import ru.compadre.mcp.workflow.result.ConnectToolResult
+import ru.compadre.mcp.workflow.result.AgentPreparationResult
+import ru.compadre.mcp.workflow.result.AvailableCliCommandResult
 import ru.compadre.mcp.workflow.result.ToolCallResult
 
 class DefaultCliOutputFormatterTest {
     private val formatter = DefaultCliOutputFormatter()
 
     @Test
-    fun formatRendersSuccessfulConnectResult() {
-        val result = ConnectResult(
-            endpoint = "http://127.0.0.1:3000/mcp",
-            connected = true,
-            serverName = "local_mcp_server",
-            serverVersion = "0.1.0",
-            serverTitle = "Local MCP Server",
-            serverInstructions = "Локальный MCP server для sandbox-проекта.",
-            tools = listOf(
-                ConnectToolResult(
-                    name = "ping",
-                    title = "Ping",
-                    description = "Возвращает короткий ответ сервера для проверки доступности.",
+    fun formatRendersSuccessfulPreparationResult() {
+        val result = AgentPreparationResult(
+            prepared = true,
+            availableCommands = listOf(
+                AvailableCliCommandResult(
+                    pattern = "tool posts",
+                    description = "Показать первые 10 публикаций.",
                 ),
-                ConnectToolResult(
-                    name = "echo",
-                    title = "Echo",
-                    description = "Возвращает переданную строку обратно клиенту.",
-                ),
-                ConnectToolResult(
-                    name = "fetch_post",
-                    title = "Fetch Post",
-                    description = "Получает публикацию из mock API JSONPlaceholder по идентификатору.",
-                ),
-                ConnectToolResult(
-                    name = "list_posts",
-                    title = "List Posts",
-                    description = "Возвращает первые публикации из mock API JSONPlaceholder.",
+                AvailableCliCommandResult(
+                    pattern = "tool post <postId>",
+                    description = "Получить публикацию по идентификатору.",
                 ),
             ),
         )
 
         val expected = listOf(
-            "Подключение к MCP-серверу установлено: http://127.0.0.1:3000/mcp",
-            "Имя сервера: local_mcp_server",
-            "Версия сервера: 0.1.0",
-            "Заголовок сервера: Local MCP Server",
-            "Инструкции сервера: Локальный MCP server для sandbox-проекта.",
-            "CLI-команды для доступных инструментов (2):",
-            "1. Fetch Post [fetch_post] -> tool post <postId>",
-            "2. List Posts [list_posts] -> tool posts",
+            "Агент готов к работе.",
+            "Доступные команды:",
+            "tool posts - Показать первые 10 публикаций.",
+            "tool post <postId> - Получить публикацию по идентификатору.",
         ).joinToString(System.lineSeparator())
 
         assertEquals(expected, formatter.format(result))
     }
 
     @Test
-    fun formatRendersFailedConnectResult() {
-        val result = ConnectResult(
-            endpoint = "http://127.0.0.1:3000/mcp",
-            connected = false,
+    fun formatRendersFailedPreparationResult() {
+        val result = AgentPreparationResult(
+            prepared = false,
             errorMessage = "boom",
         )
 
         val expected = listOf(
-            "Не удалось подключиться к MCP-серверу: http://127.0.0.1:3000/mcp",
+            "Не удалось подготовить агента.",
             "Ошибка: boom",
         ).joinToString(System.lineSeparator())
 
@@ -75,8 +53,7 @@ class DefaultCliOutputFormatterTest {
     @Test
     fun formatRendersSuccessfulToolCallResult() {
         val result = ToolCallResult(
-            endpoint = "http://127.0.0.1:3000/mcp",
-            toolName = "fetch_post",
+            commandText = "tool post 1",
             successful = true,
             content = listOf(
                 "Публикация #1",
@@ -86,7 +63,6 @@ class DefaultCliOutputFormatterTest {
         )
 
         val expected = listOf(
-            "Инструмент `fetch_post` выполнен успешно: http://127.0.0.1:3000/mcp",
             "Публикация #1",
             "Автор: 1",
             "Заголовок: Тестовый заголовок",
@@ -98,14 +74,13 @@ class DefaultCliOutputFormatterTest {
     @Test
     fun formatRendersFailedToolCallResult() {
         val result = ToolCallResult(
-            endpoint = "http://127.0.0.1:3000/mcp",
-            toolName = "fetch_post",
+            commandText = "tool post 9999",
             successful = false,
             errorMessage = "Публикация не найдена.",
         )
 
         val expected = listOf(
-            "Не удалось выполнить инструмент `fetch_post` через MCP: http://127.0.0.1:3000/mcp",
+            "Не удалось выполнить команду `tool post 9999`.",
             "Ошибка: Публикация не найдена.",
         ).joinToString(System.lineSeparator())
 

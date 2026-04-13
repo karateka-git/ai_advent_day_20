@@ -13,73 +13,65 @@ import ru.compadre.mcp.mcp.client.model.McpToolDescriptor
 import ru.compadre.mcp.mcp.toolcall.models.McpToolCallRequest
 import ru.compadre.mcp.mcp.toolcall.models.McpToolCallResult
 import ru.compadre.mcp.workflow.command.Command
-import ru.compadre.mcp.workflow.command.ConnectCommand
+import ru.compadre.mcp.workflow.command.PrepareAgentCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand
 import ru.compadre.mcp.workflow.command.ToolPostsCommand
+import ru.compadre.mcp.workflow.result.AgentPreparationResult
+import ru.compadre.mcp.workflow.result.AvailableCliCommandResult
 import ru.compadre.mcp.workflow.result.CommandResult
-import ru.compadre.mcp.workflow.result.ConnectResult
-import ru.compadre.mcp.workflow.result.ConnectToolResult
 import ru.compadre.mcp.workflow.result.ToolCallResult
 
 class ArchitectureContractsTest {
     @Test
-    fun connectCommandImplementsBaseCommandContract() {
-        val command: Command = ConnectCommand(endpointOverride = "http://localhost:3000/mcp")
+    fun prepareAgentCommandImplementsBaseCommandContract() {
+        val command: Command = PrepareAgentCommand
 
-        assertIs<ConnectCommand>(command)
-        assertEquals("http://localhost:3000/mcp", command.endpointOverride)
+        assertEquals(PrepareAgentCommand, command)
     }
 
     @Test
-    fun connectResultImplementsBaseCommandResultContract() {
-        val result: CommandResult = ConnectResult(
-            endpoint = "http://127.0.0.1:3000/mcp",
-            connected = true,
-            serverName = "local_mcp_server",
-            tools = listOf(
-                ConnectToolResult(name = "ping", title = "Ping"),
+    fun preparationResultImplementsBaseCommandResultContract() {
+        val result: CommandResult = AgentPreparationResult(
+            prepared = true,
+            availableCommands = listOf(
+                AvailableCliCommandResult(
+                    pattern = "tool posts",
+                    description = "Показать первые 10 публикаций.",
+                ),
             ),
         )
 
-        assertIs<ConnectResult>(result)
-        assertEquals(true, result.connected)
-        assertEquals(1, result.tools.size)
+        assertIs<AgentPreparationResult>(result)
+        assertEquals(true, result.prepared)
+        assertEquals(1, result.availableCommands.size)
     }
 
     @Test
     fun toolPostCommandImplementsBaseCommandContract() {
-        val command: Command = ToolPostCommand(
-            endpointOverride = "http://localhost:3000/mcp",
-            postId = 1,
-        )
+        val command: Command = ToolPostCommand(postId = 1)
 
         assertIs<ToolPostCommand>(command)
-        assertEquals("http://localhost:3000/mcp", command.endpointOverride)
         assertEquals(1, command.postId)
     }
 
     @Test
     fun toolPostsCommandImplementsBaseCommandContract() {
-        val command: Command = ToolPostsCommand(
-            endpointOverride = "http://localhost:3000/mcp",
-        )
+        val command: Command = ToolPostsCommand
 
-        assertIs<ToolPostsCommand>(command)
-        assertEquals("http://localhost:3000/mcp", command.endpointOverride)
+        assertEquals(ToolPostsCommand, command)
     }
 
     @Test
     fun toolCallResultImplementsBaseCommandResultContract() {
         val result: CommandResult = ToolCallResult(
-            endpoint = "http://127.0.0.1:3000/mcp",
-            toolName = "fetch_post",
+            commandText = "tool post 1",
             successful = true,
             content = listOf("Публикация #1"),
         )
 
         assertIs<ToolCallResult>(result)
         assertEquals(true, result.successful)
-        assertEquals("fetch_post", result.toolName)
+        assertEquals("tool post 1", result.commandText)
         assertEquals(listOf("Публикация #1"), result.content)
     }
 

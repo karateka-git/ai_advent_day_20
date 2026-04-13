@@ -3,6 +3,4 @@ package ru.compadre.mcp.workflow.command
 /**
  * Workflow-команда вызова сценария получения первых публикаций через MCP-инструмент.
  */
-data class ToolPostsCommand(
-    val endpointOverride: String? = null,
-) : Command
+data object ToolPostsCommand : Command

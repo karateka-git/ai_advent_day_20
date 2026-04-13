@@ -3,14 +3,14 @@ package ru.compadre.mcp.workflow.service
 import ru.compadre.mcp.agent.Agent
 import ru.compadre.mcp.agent.AgentRequest
 import ru.compadre.mcp.agent.AgentResponse
-import ru.compadre.mcp.mcp.toolcall.models.McpToolCallRequest
+import ru.compadre.mcp.config.McpProjectConfig
 import ru.compadre.mcp.workflow.command.Command
-import ru.compadre.mcp.workflow.command.ConnectCommand
+import ru.compadre.mcp.workflow.command.PrepareAgentCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand
 import ru.compadre.mcp.workflow.command.ToolPostsCommand
+import ru.compadre.mcp.workflow.result.AgentPreparationResult
+import ru.compadre.mcp.workflow.result.AvailableCliCommandResult
 import ru.compadre.mcp.workflow.result.CommandResult
-import ru.compadre.mcp.workflow.result.ConnectResult
-import ru.compadre.mcp.workflow.result.ConnectToolResult
 import ru.compadre.mcp.workflow.result.ToolCallResult
 
 /**
@@ -20,133 +20,121 @@ class DefaultWorkflowCommandHandler(
     private val agent: Agent,
 ) : WorkflowCommandHandler {
     override suspend fun handle(command: Command): CommandResult = when (command) {
-        is ConnectCommand -> handleConnect(command)
+        PrepareAgentCommand -> handlePrepareAgent()
         is ToolPostCommand -> handleToolPost(command)
-        is ToolPostsCommand -> handleToolPosts(command)
+        ToolPostsCommand -> handleToolPosts()
     }
 
-    private suspend fun handleConnect(command: ConnectCommand): ConnectResult {
-        val endpoint = command.endpointOverride
-            ?: error("Для ConnectCommand требуется endpoint на этапе до внедрения presentation-слоя.")
-
-        return when (val response = agent.handle(AgentRequest.Connect(endpoint))) {
-            is AgentResponse.ConnectSuccess -> ConnectResult(
-                endpoint = response.endpoint,
-                connected = true,
-                serverName = response.serverInfo.name,
-                serverVersion = response.serverInfo.version,
-                serverTitle = response.serverInfo.title,
-                serverInstructions = response.serverInfo.instructions,
-                tools = response.tools.map { tool ->
-                    ConnectToolResult(
-                        name = tool.name,
-                        title = tool.title,
-                        description = tool.description,
+    /**
+     * Запрашивает у агента актуальный snapshot возможностей и переводит его в presentation-friendly результат.
+     */
+    private suspend fun handlePrepareAgent(): AgentPreparationResult =
+        when (val response = agent.handle(AgentRequest.Prepare(McpProjectConfig.knownMcpServers()))) {
+            is AgentResponse.PreparationSuccess -> AgentPreparationResult(
+                prepared = true,
+                availableCommands = response.snapshot.availableCommands.map { command ->
+                    AvailableCliCommandResult(
+                        pattern = command.cliPattern,
+                        description = command.description,
                     )
                 },
             )
-            is AgentResponse.Failure -> ConnectResult(
-                endpoint = endpoint,
-                connected = false,
+
+            is AgentResponse.Failure -> AgentPreparationResult(
+                prepared = false,
                 errorMessage = response.message,
             )
-            is AgentResponse.ToolCallSuccess -> ConnectResult(
-                endpoint = endpoint,
-                connected = false,
-                errorMessage = "Агент вернул результат вызова инструмента для сценария connect.",
+
+            is AgentResponse.ConnectSuccess -> AgentPreparationResult(
+                prepared = false,
+                errorMessage = "Агент вернул результат подключения вместо результата подготовки.",
             )
-            is AgentResponse.PreparationSuccess -> ConnectResult(
-                endpoint = endpoint,
-                connected = false,
-                errorMessage = "Агент вернул результат подготовки вместо сценария connect.",
+
+            is AgentResponse.ToolCallSuccess -> AgentPreparationResult(
+                prepared = false,
+                errorMessage = "Агент вернул результат вызова инструмента вместо результата подготовки.",
             )
         }
-    }
 
+    /**
+     * Делегирует вызов пользовательской команды публикации агенту по стабильному commandId.
+     */
     private suspend fun handleToolPost(command: ToolPostCommand): ToolCallResult {
-        val endpoint = command.endpointOverride
-            ?: error("Для ToolPostCommand требуется endpoint на этапе до внедрения presentation-слоя.")
+        val commandText = "tool post ${command.postId}"
 
         return when (
             val response = agent.handle(
-                AgentRequest.CallTool(
-                    endpoint = endpoint,
-                    toolCallRequest = McpToolCallRequest(
-                        toolName = "fetch_post",
-                        arguments = mapOf("postId" to command.postId),
-                    ),
+                AgentRequest.CallAvailableCommand(
+                    commandId = "tool.post",
+                    arguments = mapOf("postId" to command.postId),
                 ),
             )
         ) {
             is AgentResponse.ToolCallSuccess -> ToolCallResult(
-                endpoint = response.endpoint,
-                toolName = response.result.toolName,
+                commandText = commandText,
                 successful = !response.result.isError,
                 content = response.result.content,
                 errorMessage = response.result.content.takeIf { response.result.isError }
                     ?.joinToString(separator = System.lineSeparator()),
             )
+
             is AgentResponse.Failure -> ToolCallResult(
-                endpoint = endpoint,
-                toolName = "fetch_post",
+                commandText = commandText,
                 successful = false,
                 errorMessage = response.message,
             )
+
             is AgentResponse.ConnectSuccess -> ToolCallResult(
-                endpoint = endpoint,
-                toolName = "fetch_post",
+                commandText = commandText,
                 successful = false,
-                errorMessage = "Агент вернул результат подключения для сценария вызова инструмента.",
+                errorMessage = "Агент вернул результат подключения для сценария вызова пользовательской команды.",
             )
+
             is AgentResponse.PreparationSuccess -> ToolCallResult(
-                endpoint = endpoint,
-                toolName = "fetch_post",
+                commandText = commandText,
                 successful = false,
-                errorMessage = "Агент вернул результат подготовки вместо сценария вызова инструмента.",
+                errorMessage = "Агент вернул результат подготовки вместо сценария вызова пользовательской команды.",
             )
         }
     }
 
-    private suspend fun handleToolPosts(command: ToolPostsCommand): ToolCallResult {
-        val endpoint = command.endpointOverride
-            ?: error("Для ToolPostsCommand требуется endpoint на этапе до внедрения presentation-слоя.")
+    /**
+     * Делегирует вызов пользовательской команды списка публикаций агенту по стабильному commandId.
+     */
+    private suspend fun handleToolPosts(): ToolCallResult {
+        val commandText = "tool posts"
 
         return when (
             val response = agent.handle(
-                AgentRequest.CallTool(
-                    endpoint = endpoint,
-                    toolCallRequest = McpToolCallRequest(
-                        toolName = "list_posts",
-                        arguments = emptyMap(),
-                    ),
+                AgentRequest.CallAvailableCommand(
+                    commandId = "tool.posts",
                 ),
             )
         ) {
             is AgentResponse.ToolCallSuccess -> ToolCallResult(
-                endpoint = response.endpoint,
-                toolName = response.result.toolName,
+                commandText = commandText,
                 successful = !response.result.isError,
                 content = response.result.content,
                 errorMessage = response.result.content.takeIf { response.result.isError }
                     ?.joinToString(separator = System.lineSeparator()),
             )
+
             is AgentResponse.Failure -> ToolCallResult(
-                endpoint = endpoint,
-                toolName = "list_posts",
+                commandText = commandText,
                 successful = false,
                 errorMessage = response.message,
             )
+
             is AgentResponse.ConnectSuccess -> ToolCallResult(
-                endpoint = endpoint,
-                toolName = "list_posts",
+                commandText = commandText,
                 successful = false,
-                errorMessage = "Агент вернул результат подключения для сценария вызова инструмента.",
+                errorMessage = "Агент вернул результат подключения для сценария вызова пользовательской команды.",
             )
+
             is AgentResponse.PreparationSuccess -> ToolCallResult(
-                endpoint = endpoint,
-                toolName = "list_posts",
+                commandText = commandText,
                 successful = false,
-                errorMessage = "Агент вернул результат подготовки вместо сценария вызова инструмента.",
+                errorMessage = "Агент вернул результат подготовки вместо сценария вызова пользовательской команды.",
             )
         }
     }

@@ -1,34 +1,33 @@
 package ru.compadre.mcp.presentation.cli
 
 import ru.compadre.mcp.workflow.command.Command
-import ru.compadre.mcp.workflow.command.ConnectCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand
 import ru.compadre.mcp.workflow.command.ToolPostsCommand
 
 /**
- * Стандартный CLI-разборщик команд проекта.
+ * Стандартный CLI-разборщик пользовательских команд проекта.
  */
-class DefaultCliCommandParser(
-    private val defaultEndpoint: () -> String,
-) : CliCommandParser {
+class DefaultCliCommandParser : CliCommandParser {
     override fun parse(args: Array<String>): Command {
         val rawCommand = args.firstOrNull()
             ?.trim()
             ?.trimStart('\uFEFF')
             ?.lowercase()
             ?: throw IllegalArgumentException(
-                "Команда не указана. Поддерживаемые команды: connect, tool posts, tool post <postId>.",
+                "Команда не указана. Поддерживаемые команды: tool posts, tool post <postId>.",
             )
 
         return when (rawCommand) {
-            "connect" -> ConnectCommand(endpointOverride = defaultEndpoint())
             "tool" -> parseToolCommand(args)
             else -> throw IllegalArgumentException(
-                "Неизвестная команда клиента: `$rawCommand`. Поддерживаемые команды: connect, tool posts, tool post <postId>.",
+                "Неизвестная команда клиента: `$rawCommand`. Поддерживаемые команды: tool posts, tool post <postId>.",
             )
         }
     }
 
+    /**
+     * Разбирает прикладные tool-команды пользователя без знания о конкретных MCP endpoint.
+     */
     private fun parseToolCommand(args: Array<String>): Command {
         val toolName = args.getOrNull(1)
             ?.trim()
@@ -38,19 +37,14 @@ class DefaultCliCommandParser(
             )
 
         return when (toolName) {
-            "posts" -> ToolPostsCommand(
-                endpointOverride = defaultEndpoint(),
-            )
+            "posts" -> ToolPostsCommand
             "post" -> {
                 val postId = args.getOrNull(2)?.toIntOrNull()
                     ?: throw IllegalArgumentException(
                         "Для команды `tool post` требуется числовой аргумент `<postId>`.",
                     )
 
-                ToolPostCommand(
-                    endpointOverride = defaultEndpoint(),
-                    postId = postId,
-                )
+                ToolPostCommand(postId = postId)
             }
 
             else -> throw IllegalArgumentException(

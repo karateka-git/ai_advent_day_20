@@ -4,14 +4,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
-import ru.compadre.mcp.workflow.command.ConnectCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand
 import ru.compadre.mcp.workflow.command.ToolPostsCommand
 
 class DefaultCliCommandParserTest {
     @Test
     fun parseRejectsEmptyCommand() {
-        val parser = DefaultCliCommandParser { "http://127.0.0.1:3000/mcp" }
+        val parser = DefaultCliCommandParser()
 
         assertFailsWith<IllegalArgumentException> {
             parser.parse(emptyArray())
@@ -19,28 +18,17 @@ class DefaultCliCommandParserTest {
     }
 
     @Test
-    fun parseAcceptsExplicitConnectCommand() {
-        val parser = DefaultCliCommandParser { "http://127.0.0.1:3000/mcp" }
+    fun parseRejectsRemovedConnectCommand() {
+        val parser = DefaultCliCommandParser()
 
-        val command = parser.parse(arrayOf("connect"))
-
-        assertIs<ConnectCommand>(command)
-        assertEquals("http://127.0.0.1:3000/mcp", command.endpointOverride)
-    }
-
-    @Test
-    fun parseAcceptsCommandWithBomPrefix() {
-        val parser = DefaultCliCommandParser { "http://127.0.0.1:3000/mcp" }
-
-        val command = parser.parse(arrayOf("\uFEFFconnect"))
-
-        assertIs<ConnectCommand>(command)
-        assertEquals("http://127.0.0.1:3000/mcp", command.endpointOverride)
+        assertFailsWith<IllegalArgumentException> {
+            parser.parse(arrayOf("connect"))
+        }
     }
 
     @Test
     fun parseRejectsUnknownCommand() {
-        val parser = DefaultCliCommandParser { "http://127.0.0.1:3000/mcp" }
+        val parser = DefaultCliCommandParser()
 
         assertFailsWith<IllegalArgumentException> {
             parser.parse(arrayOf("tools"))
@@ -49,28 +37,26 @@ class DefaultCliCommandParserTest {
 
     @Test
     fun parseAcceptsToolPostCommand() {
-        val parser = DefaultCliCommandParser { "http://127.0.0.1:3000/mcp" }
+        val parser = DefaultCliCommandParser()
 
         val command = parser.parse(arrayOf("tool", "post", "1"))
 
         assertIs<ToolPostCommand>(command)
-        assertEquals("http://127.0.0.1:3000/mcp", command.endpointOverride)
         assertEquals(1, command.postId)
     }
 
     @Test
-    fun parseAcceptsToolPostsCommand() {
-        val parser = DefaultCliCommandParser { "http://127.0.0.1:3000/mcp" }
+    fun parseAcceptsToolPostsCommandWithBomPrefix() {
+        val parser = DefaultCliCommandParser()
 
-        val command = parser.parse(arrayOf("tool", "posts"))
+        val command = parser.parse(arrayOf("\uFEFFtool", "posts"))
 
-        assertIs<ToolPostsCommand>(command)
-        assertEquals("http://127.0.0.1:3000/mcp", command.endpointOverride)
+        assertEquals(ToolPostsCommand, command)
     }
 
     @Test
     fun parseRejectsToolPostWithoutNumericPostId() {
-        val parser = DefaultCliCommandParser { "http://127.0.0.1:3000/mcp" }
+        val parser = DefaultCliCommandParser()
 
         assertFailsWith<IllegalArgumentException> {
             parser.parse(arrayOf("tool", "post", "abc"))
