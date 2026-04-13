@@ -1,5 +1,5 @@
 param(
-    [string[]]$Commands = @("connect", "exit"),
+    [string[]]$Commands = @("help", "tool posts", "exit"),
     [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot),
     [string]$StdoutPath = "",
     [string]$StderrPath = ""

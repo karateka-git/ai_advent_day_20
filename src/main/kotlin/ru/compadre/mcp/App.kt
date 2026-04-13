@@ -1,5 +1,8 @@
 package ru.compadre.mcp
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import ru.compadre.mcp.agent.DefaultAgent
 import ru.compadre.mcp.mcp.client.DefaultMcpClient
@@ -7,6 +10,9 @@ import ru.compadre.mcp.presentation.cli.CliCommandParser
 import ru.compadre.mcp.presentation.cli.CliOutputFormatter
 import ru.compadre.mcp.presentation.cli.DefaultCliCommandParser
 import ru.compadre.mcp.presentation.cli.DefaultCliOutputFormatter
+import ru.compadre.mcp.workflow.command.PrepareAgentCommand
+import ru.compadre.mcp.workflow.result.AgentPreparationResult
+import ru.compadre.mcp.workflow.result.AvailableCliCommandResult
 import ru.compadre.mcp.workflow.result.CommandResult
 import ru.compadre.mcp.workflow.service.DefaultWorkflowCommandHandler
 import ru.compadre.mcp.workflow.service.WorkflowCommandHandler
@@ -28,8 +34,19 @@ fun main(args: Array<String>): Unit = runBlocking {
     )
     val outputFormatter: CliOutputFormatter = DefaultCliOutputFormatter()
 
+    val preparationResult = prepareAgent(
+        commandHandler = commandHandler,
+    )
+
+    if (!preparationResult.prepared) {
+        println(outputFormatter.format(preparationResult))
+        return@runBlocking
+    }
+
     if (args.isEmpty()) {
+        println(outputFormatter.format(preparationResult))
         runInteractiveShell(
+            availableCommands = preparationResult.availableCommands,
             commandParser = commandParser,
             commandHandler = commandHandler,
             outputFormatter = outputFormatter,
@@ -62,12 +79,35 @@ private fun configureUtf8Console() {
     )
 }
 
+/**
+ * Выполняет стартовую подготовку агента до входа в пользовательский цикл и показывает анимированное состояние загрузки.
+ */
+private suspend fun prepareAgent(
+    commandHandler: WorkflowCommandHandler,
+): AgentPreparationResult = coroutineScope {
+    val preparationJob = async {
+        commandHandler.handle(PrepareAgentCommand)
+    }
+    val loadingFrames = listOf("", ".", "..", "...")
+    var frameIndex = 0
+
+    while (!preparationJob.isCompleted) {
+        val dots = loadingFrames[frameIndex % loadingFrames.size]
+        print("\rПодготовка агента$dots   ")
+        delay(250)
+        frameIndex++
+    }
+
+    print("\r${" ".repeat(40)}\r")
+    preparationJob.await() as AgentPreparationResult
+}
+
 private suspend fun runInteractiveShell(
+    availableCommands: List<AvailableCliCommandResult>,
     commandParser: CliCommandParser,
     commandHandler: WorkflowCommandHandler,
     outputFormatter: CliOutputFormatter,
 ) {
-    println("MCP-агент готов к работе.")
     println("Введите `help`, чтобы увидеть доступные команды.")
 
     while (true) {
@@ -91,7 +131,7 @@ private suspend fun runInteractiveShell(
             }
 
             "help" -> {
-                println(helpText())
+                println(helpText(availableCommands))
                 continue
             }
         }
@@ -109,13 +149,17 @@ private fun configureLogging() {
     System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "warn")
 }
 
-private fun helpText(): String = listOf(
-    "Доступные команды:",
-    "tool posts - показать первые 10 публикаций из JSONPlaceholder.",
-    "tool post <postId> - получить публикацию из JSONPlaceholder по идентификатору.",
-    "help - показать это сообщение.",
-    "exit - завершить сессию клиента.",
-).joinToString(separator = System.lineSeparator())
+/**
+ * Строит help-сообщение только из тех прикладных команд, которые агент реально нашёл при подготовке.
+ */
+private fun helpText(availableCommands: List<AvailableCliCommandResult>): String = buildList {
+    add("Доступные команды:")
+    availableCommands.forEach { command ->
+        add("${command.pattern} - ${command.description}")
+    }
+    add("help - показать это сообщение.")
+    add("exit - завершить сессию клиента.")
+}.joinToString(separator = System.lineSeparator())
 
 private suspend fun executeCommand(
     commandArgs: Array<String>,

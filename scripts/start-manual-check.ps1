@@ -159,7 +159,7 @@ function Invoke-Utf8ClientCommands {
 
     $null = & powershell -ExecutionPolicy Bypass -File (Join-Path $ProjectRoot "scripts\invoke-client-commands.ps1") `
         -ProjectRoot $ProjectRoot `
-        -Commands @("connect", "exit") `
+        -Commands @("help", "tool posts", "exit") `
         -StdoutPath $StdoutPath `
         -StderrPath $StderrPath
 
