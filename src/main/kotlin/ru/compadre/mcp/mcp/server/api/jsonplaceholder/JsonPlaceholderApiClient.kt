@@ -1,4 +1,4 @@
-package ru.compadre.mcp.mcp.server.fetchpost
+package ru.compadre.mcp.mcp.server.api.jsonplaceholder
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -7,18 +7,32 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
+import ru.compadre.mcp.mcp.server.api.jsonplaceholder.tools.fetchpost.models.JsonPlaceholderPost
 
 /**
- * HTTP-клиент к публичному mock API `JSONPlaceholder`.
+ * Контракт доступа к внешнему API `JSONPlaceholder`.
  */
-internal class JsonPlaceholderPostLookupClient(
+internal interface JsonPlaceholderApiClient {
+    /**
+     * Возвращает публикацию по её идентификатору.
+     *
+     * @param postId идентификатор публикации
+     * @return найденная публикация или `null`, если публикация не существует
+     */
+    suspend fun fetchPost(postId: Int): JsonPlaceholderPost?
+}
+
+/**
+ * Стандартная HTTP-реализация клиента к API `JSONPlaceholder`.
+ */
+internal class DefaultJsonPlaceholderApiClient(
     private val baseUrl: String = "https://jsonplaceholder.typicode.com",
     private val httpClient: HttpClient = HttpClient(CIO) {
         install(ContentNegotiation) {
             json()
         }
     },
-) : PostLookupClient {
+) : JsonPlaceholderApiClient {
     override suspend fun fetchPost(postId: Int): JsonPlaceholderPost? {
         val response = httpClient.get("$baseUrl/posts/$postId")
 

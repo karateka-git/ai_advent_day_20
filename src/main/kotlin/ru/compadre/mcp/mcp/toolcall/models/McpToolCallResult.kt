@@ -1,4 +1,4 @@
-package ru.compadre.mcp.mcp.model
+package ru.compadre.mcp.mcp.toolcall.models
 
 /**
  * Проектная модель результата вызова MCP-инструмента.

@@ -3,14 +3,14 @@ package ru.compadre.mcp.mcp.server
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import ru.compadre.mcp.mcp.server.fetchpost.JsonPlaceholderPost
-import ru.compadre.mcp.mcp.server.fetchpost.PostLookupClient
+import ru.compadre.mcp.mcp.server.api.jsonplaceholder.JsonPlaceholderApiClient
+import ru.compadre.mcp.mcp.server.api.jsonplaceholder.tools.fetchpost.models.JsonPlaceholderPost
 
 class McpServerTest {
     @Test
     fun serverRegistersExpectedTools() {
         val server = createMcpServer(
-            postLookupClient = object : PostLookupClient {
+            jsonPlaceholderApiClient = object : JsonPlaceholderApiClient {
                 override suspend fun fetchPost(postId: Int): JsonPlaceholderPost? = null
             },
         )

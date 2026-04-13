@@ -1,6 +1,6 @@
 package ru.compadre.mcp.agent
 
-import ru.compadre.mcp.mcp.model.McpToolCallRequest
+import ru.compadre.mcp.mcp.toolcall.models.McpToolCallRequest
 
 /**
  * Базовый контракт запроса к агенту.

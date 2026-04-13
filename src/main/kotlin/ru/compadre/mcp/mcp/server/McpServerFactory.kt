@@ -13,16 +13,16 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
-import ru.compadre.mcp.mcp.server.fetchpost.JsonPlaceholderPostLookupClient
-import ru.compadre.mcp.mcp.server.fetchpost.PostLookupClient
-import ru.compadre.mcp.mcp.server.fetchpost.fetchPostToolResult
-import ru.compadre.mcp.mcp.server.fetchpost.fetchPostToolSchema
+import ru.compadre.mcp.mcp.server.api.jsonplaceholder.DefaultJsonPlaceholderApiClient
+import ru.compadre.mcp.mcp.server.api.jsonplaceholder.JsonPlaceholderApiClient
+import ru.compadre.mcp.mcp.server.api.jsonplaceholder.tools.fetchpost.fetchPostToolResult
+import ru.compadre.mcp.mcp.server.api.jsonplaceholder.tools.fetchpost.fetchPostToolSchema
 
 /**
- * Создаёт минимальный экземпляр MCP server для локального sandbox-проекта.
+ * Собирает MCP server для локального sandbox-проекта.
  */
 internal fun createMcpServer(
-    postLookupClient: PostLookupClient = JsonPlaceholderPostLookupClient(),
+    jsonPlaceholderApiClient: JsonPlaceholderApiClient = DefaultJsonPlaceholderApiClient(),
 ): Server = Server(
     serverInfo = Implementation(
         name = "local_mcp_server",
@@ -74,7 +74,7 @@ internal fun createMcpServer(
     ) { request ->
         fetchPostToolResult(
             arguments = request.arguments,
-            postLookupClient = postLookupClient,
+            jsonPlaceholderApiClient = jsonPlaceholderApiClient,
         )
     }
 }

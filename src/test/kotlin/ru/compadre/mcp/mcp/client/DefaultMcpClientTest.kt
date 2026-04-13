@@ -1,11 +1,11 @@
-package ru.compadre.mcp.mcp
+package ru.compadre.mcp.mcp.client
 
 import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import ru.compadre.mcp.mcp.model.McpToolCallRequest
-import ru.compadre.mcp.mcp.model.McpToolCallResult
+import ru.compadre.mcp.mcp.toolcall.models.McpToolCallRequest
+import ru.compadre.mcp.mcp.toolcall.models.McpToolCallResult
 
 class DefaultMcpClientTest {
     @Test

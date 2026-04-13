@@ -1,4 +1,4 @@
-package ru.compadre.mcp.mcp
+package ru.compadre.mcp.mcp.client
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -12,11 +12,11 @@ import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import io.modelcontextprotocol.kotlin.sdk.types.Tool
-import ru.compadre.mcp.mcp.model.McpConnectionSnapshot
-import ru.compadre.mcp.mcp.model.McpServerInfo
-import ru.compadre.mcp.mcp.model.McpToolCallRequest
-import ru.compadre.mcp.mcp.model.McpToolCallResult
-import ru.compadre.mcp.mcp.model.McpToolDescriptor
+import ru.compadre.mcp.mcp.client.model.McpConnectionSnapshot
+import ru.compadre.mcp.mcp.client.model.McpServerInfo
+import ru.compadre.mcp.mcp.client.model.McpToolDescriptor
+import ru.compadre.mcp.mcp.toolcall.models.McpToolCallRequest
+import ru.compadre.mcp.mcp.toolcall.models.McpToolCallResult
 
 /**
  * Стандартная реализация проектного MCP-клиента через Kotlin MCP SDK.

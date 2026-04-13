@@ -1,4 +1,4 @@
-package ru.compadre.mcp.mcp.server.fetchpost
+package ru.compadre.mcp.mcp.server.api.jsonplaceholder.tools.fetchpost
 
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import kotlinx.coroutines.runBlocking
@@ -7,6 +7,8 @@ import kotlinx.serialization.json.put
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import ru.compadre.mcp.mcp.server.api.jsonplaceholder.JsonPlaceholderApiClient
+import ru.compadre.mcp.mcp.server.api.jsonplaceholder.tools.fetchpost.models.JsonPlaceholderPost
 
 class FetchPostToolTest {
     @Test
@@ -15,7 +17,7 @@ class FetchPostToolTest {
             arguments = buildJsonObject {
                 put("postId", 1)
             },
-            postLookupClient = object : PostLookupClient {
+            jsonPlaceholderApiClient = object : JsonPlaceholderApiClient {
                 override suspend fun fetchPost(postId: Int): JsonPlaceholderPost = JsonPlaceholderPost(
                     userId = 7,
                     id = postId,
@@ -42,7 +44,7 @@ class FetchPostToolTest {
     fun fetchPostToolReturnsValidationErrorWhenPostIdIsMissing() = runBlocking {
         val result = fetchPostToolResult(
             arguments = buildJsonObject {},
-            postLookupClient = object : PostLookupClient {
+            jsonPlaceholderApiClient = object : JsonPlaceholderApiClient {
                 override suspend fun fetchPost(postId: Int): JsonPlaceholderPost? {
                     error("Клиент не должен вызываться при ошибке валидации.")
                 }

@@ -1,6 +1,6 @@
 package ru.compadre.mcp.agent
 
-import ru.compadre.mcp.mcp.McpClient
+import ru.compadre.mcp.mcp.client.McpClient
 
 /**
  * Стандартная реализация агентного слоя поверх проектного MCP-клиента.

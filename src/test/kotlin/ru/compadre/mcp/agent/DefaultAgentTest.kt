@@ -4,12 +4,12 @@ import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import ru.compadre.mcp.mcp.McpClient
-import ru.compadre.mcp.mcp.model.McpConnectionSnapshot
-import ru.compadre.mcp.mcp.model.McpServerInfo
-import ru.compadre.mcp.mcp.model.McpToolCallRequest
-import ru.compadre.mcp.mcp.model.McpToolCallResult
-import ru.compadre.mcp.mcp.model.McpToolDescriptor
+import ru.compadre.mcp.mcp.client.McpClient
+import ru.compadre.mcp.mcp.client.model.McpConnectionSnapshot
+import ru.compadre.mcp.mcp.client.model.McpServerInfo
+import ru.compadre.mcp.mcp.client.model.McpToolDescriptor
+import ru.compadre.mcp.mcp.toolcall.models.McpToolCallRequest
+import ru.compadre.mcp.mcp.toolcall.models.McpToolCallResult
 
 class DefaultAgentTest {
     @Test

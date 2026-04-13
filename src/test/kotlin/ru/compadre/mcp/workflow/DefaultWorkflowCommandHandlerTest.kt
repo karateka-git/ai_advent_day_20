@@ -7,9 +7,9 @@ import kotlin.test.assertIs
 import ru.compadre.mcp.agent.Agent
 import ru.compadre.mcp.agent.AgentRequest
 import ru.compadre.mcp.agent.AgentResponse
-import ru.compadre.mcp.mcp.model.McpServerInfo
-import ru.compadre.mcp.mcp.model.McpToolCallResult
-import ru.compadre.mcp.mcp.model.McpToolDescriptor
+import ru.compadre.mcp.mcp.client.model.McpServerInfo
+import ru.compadre.mcp.mcp.client.model.McpToolDescriptor
+import ru.compadre.mcp.mcp.toolcall.models.McpToolCallResult
 import ru.compadre.mcp.workflow.command.ConnectCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand
 import ru.compadre.mcp.workflow.result.ConnectResult

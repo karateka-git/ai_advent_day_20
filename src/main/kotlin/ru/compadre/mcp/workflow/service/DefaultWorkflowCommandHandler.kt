@@ -3,7 +3,7 @@ package ru.compadre.mcp.workflow.service
 import ru.compadre.mcp.agent.Agent
 import ru.compadre.mcp.agent.AgentRequest
 import ru.compadre.mcp.agent.AgentResponse
-import ru.compadre.mcp.mcp.model.McpToolCallRequest
+import ru.compadre.mcp.mcp.toolcall.models.McpToolCallRequest
 import ru.compadre.mcp.workflow.command.Command
 import ru.compadre.mcp.workflow.command.ConnectCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand

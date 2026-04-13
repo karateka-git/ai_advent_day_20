@@ -1,8 +1,8 @@
-package ru.compadre.mcp.mcp
+package ru.compadre.mcp.mcp.client
 
-import ru.compadre.mcp.mcp.model.McpConnectionSnapshot
-import ru.compadre.mcp.mcp.model.McpToolCallRequest
-import ru.compadre.mcp.mcp.model.McpToolCallResult
+import ru.compadre.mcp.mcp.client.model.McpConnectionSnapshot
+import ru.compadre.mcp.mcp.toolcall.models.McpToolCallRequest
+import ru.compadre.mcp.mcp.toolcall.models.McpToolCallResult
 
 /**
  * Проектный контракт доступа к MCP.

@@ -1,4 +1,4 @@
-package ru.compadre.mcp.mcp.model
+package ru.compadre.mcp.mcp.client.model
 
 /**
  * Проектное описание server info, полученного от MCP.

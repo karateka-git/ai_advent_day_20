@@ -1,4 +1,4 @@
-package ru.compadre.mcp.mcp.server.fetchpost
+package ru.compadre.mcp.mcp.server.api.jsonplaceholder.tools.fetchpost
 
 import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent
@@ -9,6 +9,8 @@ import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
+import ru.compadre.mcp.mcp.server.api.jsonplaceholder.JsonPlaceholderApiClient
+import ru.compadre.mcp.mcp.server.api.jsonplaceholder.tools.fetchpost.models.JsonPlaceholderPost
 
 /**
  * Возвращает `inputSchema` для инструмента `fetch_post`.
@@ -27,17 +29,17 @@ internal fun fetchPostToolSchema(): ToolSchema = ToolSchema(
  * Выполняет server-side сценарий инструмента `fetch_post`.
  *
  * @param arguments JSON-аргументы вызова инструмента
- * @param postLookupClient клиент к внешнему источнику данных
+ * @param jsonPlaceholderApiClient клиент к внешнему источнику данных
  * @return результат вызова MCP-инструмента
  */
 internal suspend fun fetchPostToolResult(
     arguments: JsonObject?,
-    postLookupClient: PostLookupClient,
+    jsonPlaceholderApiClient: JsonPlaceholderApiClient,
 ): CallToolResult {
     val postId = arguments.requiredIntArgument("postId")
         ?: return errorToolResult("Для инструмента fetch_post требуется числовой аргумент `postId`.")
 
-    val post = postLookupClient.fetchPost(postId)
+    val post = jsonPlaceholderApiClient.fetchPost(postId)
         ?: return errorToolResult("Публикация с идентификатором `$postId` не найдена.")
 
     return CallToolResult(

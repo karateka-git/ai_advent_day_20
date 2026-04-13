@@ -3,7 +3,7 @@ package ru.compadre.mcp
 import kotlinx.coroutines.runBlocking
 import ru.compadre.mcp.agent.DefaultAgent
 import ru.compadre.mcp.config.McpProjectConfig
-import ru.compadre.mcp.mcp.DefaultMcpClient
+import ru.compadre.mcp.mcp.client.DefaultMcpClient
 import ru.compadre.mcp.presentation.cli.CliCommandParser
 import ru.compadre.mcp.presentation.cli.CliOutputFormatter
 import ru.compadre.mcp.presentation.cli.DefaultCliCommandParser
