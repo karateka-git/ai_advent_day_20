@@ -1,1 +1,1 @@
-rootProject.name = "mcp-sandbox"
+rootProject.name = "ai_advent_day_17"

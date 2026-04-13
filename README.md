@@ -1,4 +1,4 @@
-# mcp-sandbox
+# ai_advent_day_17
 
 Расширяемый sandbox-проект на Kotlin для знакомства с MCP и подготовки базы под будущие агентные сценарии.
 
@@ -140,9 +140,9 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -Headl
 
 ## Документация
 
-- проектный `MemoryBank`: [MemoryBank/README.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_16/MemoryBank/README.md)
-- preflight для новых сессий: [MemoryBank/agent-preflight.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_16/MemoryBank/agent-preflight.md)
-- ТЗ по MCP reference-части: [docs/technical-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_16/docs/technical-spec.md)
-- журнал реализации MCP reference-части: [docs/mcp-reference-implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_16/docs/mcp-reference-implementation-log.md)
-- ТЗ по агентной архитектуре: [docs/agent-architecture-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_16/docs/agent-architecture-spec.md)
-- журнал реализации агентной архитектуры: [docs/agent-architecture-implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_16/docs/agent-architecture-implementation-log.md)
+- проектный `MemoryBank`: [MemoryBank/README.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/MemoryBank/README.md)
+- preflight для новых сессий: [MemoryBank/agent-preflight.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/MemoryBank/agent-preflight.md)
+- ТЗ по MCP reference-части: [docs/technical-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/docs/technical-spec.md)
+- журнал реализации MCP reference-части: [docs/mcp-reference-implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/docs/mcp-reference-implementation-log.md)
+- ТЗ по агентной архитектуре: [docs/agent-architecture-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/docs/agent-architecture-spec.md)
+- журнал реализации агентной архитектуры: [docs/agent-architecture-implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_17/docs/agent-architecture-implementation-log.md)
