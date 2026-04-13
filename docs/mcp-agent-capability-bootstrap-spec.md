@@ -276,6 +276,14 @@
 4. Убрать любые presentation-level проверки подключения к MCP.
 5. Добавить unit-тесты на новый CLI-контракт.
 
+Подэтапы внедрения:
+
+1. Удалить из `workflow` отдельный пользовательский сценарий `connect` вместе с `ConnectCommand` и `ConnectResult`, чтобы верхние слои больше не моделировали ручное подключение к MCP.
+2. Перевести `workflow`-команды `tool posts` и `tool post <postId>` на agent-level вызов доступной команды по стабильному `commandId`, не передавая наружу endpoint и MCP `toolName`.
+3. Обновить CLI parser и formatter так, чтобы они работали только с прикладными командами и не зависели от server-level данных `connect`.
+4. Убрать из `App` и других presentation-точек любые флаги и guard'ы вида `isConnected`, потому что доступность команд теперь определяется capability snapshot агента.
+5. Обновить локальные unit-тесты `workflow` и `presentation`, чтобы они проверяли новый CLI-контракт без `connect` и без знания о конкретном MCP endpoint.
+
 ### Этап 5. UX подготовки агента
 
 Цель:
