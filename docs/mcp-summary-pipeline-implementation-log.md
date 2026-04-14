@@ -13,7 +13,7 @@
 
 ## Этап 1. Контракт Pipeline И Документация
 
-Статус: в работе
+Статус: завершён
 
 Цель этапа:
 
@@ -50,3 +50,56 @@
 Следующий шаг:
 
 - перейти к `Этапу 2` и реализовать server-side инструменты вместе с локальным хранилищем summary.
+
+## Этап 2. MCP-Инструменты И Локальное Хранилище
+
+Статус: завершён
+
+Цель этапа:
+
+- реализовать server-side инструменты для pipeline;
+- добавить локальное файловое хранилище summary;
+- подтвердить базовую работоспособность server-side тестами.
+
+Выполненные действия:
+
+1. Добавлены serializable-модели pipeline:
+   - `SummaryPost`
+   - `PostSelection`
+   - `SummaryDraft`
+   - `SavedSummary`
+2. Реализовано файловое хранилище `FileSummaryStorage`.
+3. Добавлены новые инструменты:
+   - `pick_random_posts`
+   - `merge_posts`
+   - `save_summary`
+   - `list_saved_summaries`
+4. В `createStatelessMcpServer(...)` зарегистрированы новые MCP-tools.
+5. Добавлены server-side тесты на:
+   - файловое хранилище;
+   - `pick_random_posts`;
+   - `merge_posts`;
+   - `save_summary`;
+   - `list_saved_summaries`;
+   - регистрацию новых инструментов в `stateless` сервере.
+6. Выполнен прогон `.\gradlew.bat test`.
+
+Принятые решения:
+
+- structured output новых инструментов отдаётся через `structuredContent`, а человекочитаемая часть — через `TextContent`;
+- локальное хранилище реализовано как JSON-файл в `build/tmp/mcp-summary-storage`;
+- orchestration по-прежнему остаётся вне MCP server, а инструменты сохраняются атомарными.
+
+Проверка:
+
+- `stateless` server публикует все четыре новых инструмента;
+- новые server-side тесты проходят;
+- `.\gradlew.bat test` завершается успешно.
+
+Коммиты этапа:
+
+- текущий коммит этапа — server-side реализация summary pipeline tools и локального хранилища.
+
+Следующий шаг:
+
+- перейти к `Этапу 3` и реализовать orchestration pipeline в agent/workflow-слое.
