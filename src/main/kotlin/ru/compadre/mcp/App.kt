@@ -3,9 +3,11 @@ package ru.compadre.mcp
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import ru.compadre.mcp.agent.DefaultAgent
-import ru.compadre.mcp.mcp.client.DefaultMcpClient
+import ru.compadre.mcp.mcp.client.RoutingMcpClient
 import ru.compadre.mcp.presentation.cli.CliCommandParser
 import ru.compadre.mcp.presentation.cli.CliOutputFormatter
 import ru.compadre.mcp.presentation.cli.DefaultCliCommandParser
@@ -28,38 +30,45 @@ fun main(args: Array<String>): Unit = runBlocking {
     configureUtf8Console()
     configureLogging()
 
+    val mcpClient = RoutingMcpClient()
+
     val commandParser: CliCommandParser = DefaultCliCommandParser()
     val commandHandler: WorkflowCommandHandler = DefaultWorkflowCommandHandler(
-        agent = DefaultAgent(DefaultMcpClient()),
+        agent = DefaultAgent(mcpClient),
     )
     val outputFormatter: CliOutputFormatter = DefaultCliOutputFormatter()
 
-    val preparationResult = prepareAgent(
-        commandHandler = commandHandler,
-    )
+    try {
+        val preparationResult = prepareAgent(
+            commandHandler = commandHandler,
+        )
 
-    if (!preparationResult.prepared) {
-        println(outputFormatter.format(preparationResult))
-        return@runBlocking
-    }
+        if (!preparationResult.prepared) {
+            println(outputFormatter.format(preparationResult))
+            return@runBlocking
+        }
 
-    if (args.isEmpty()) {
-        println(outputFormatter.format(preparationResult))
-        runInteractiveShell(
-            availableCommands = preparationResult.availableCommands,
+        if (args.isEmpty()) {
+            println(outputFormatter.format(preparationResult))
+            runInteractiveShell(
+                availableCommands = preparationResult.availableCommands,
+                commandParser = commandParser,
+                commandHandler = commandHandler,
+                outputFormatter = outputFormatter,
+                mcpClient = mcpClient,
+            )
+            return@runBlocking
+        }
+
+        executeCommand(
+            commandArgs = args,
             commandParser = commandParser,
             commandHandler = commandHandler,
             outputFormatter = outputFormatter,
         )
-        return@runBlocking
+    } finally {
+        mcpClient.close()
     }
-
-    executeCommand(
-        commandArgs = args,
-        commandParser = commandParser,
-        commandHandler = commandHandler,
-        outputFormatter = outputFormatter,
-    )
 }
 
 private fun configureUtf8Console() {
@@ -107,46 +116,60 @@ private suspend fun runInteractiveShell(
     commandParser: CliCommandParser,
     commandHandler: WorkflowCommandHandler,
     outputFormatter: CliOutputFormatter,
-) {
+    mcpClient: RoutingMcpClient,
+) = coroutineScope {
     println("Введите `help`, чтобы увидеть доступные команды.")
-
-    while (true) {
-        print("> ")
-        val rawInput = readlnOrNull()
-            ?.trim()
-            ?.trimStart('\uFEFF')
-            ?: run {
-                println("Сессия клиента завершена.")
-                return
-            }
-
-        if (rawInput.isBlank()) {
-            continue
+    val notificationJob = launch(Dispatchers.IO) {
+        mcpClient.randomPostNotifications().collect { notification ->
+            print("\r${" ".repeat(80)}\r")
+            println("[push] ${notification.message}")
+            print("> ")
         }
+    }
 
-        when (rawInput.lowercase()) {
-            "exit", "quit" -> {
-                println("Сессия клиента завершена.")
-                return
-            }
+    try {
+        while (true) {
+            print("> ")
+            val rawInput = readlnOrNull()
+                ?.trim()
+                ?.trimStart('\uFEFF')
+                ?: run {
+                    println("Сессия клиента завершена.")
+                    return@coroutineScope
+                }
 
-            "help" -> {
-                println(helpText(availableCommands))
+            if (rawInput.isBlank()) {
                 continue
             }
-        }
 
-        executeCommand(
-            commandArgs = rawInput.split(Regex("\\s+")).toTypedArray(),
-            commandParser = commandParser,
-            commandHandler = commandHandler,
-            outputFormatter = outputFormatter,
-        )
+            when (rawInput.lowercase()) {
+                "exit", "quit" -> {
+                    println("Сессия клиента завершена.")
+                    return@coroutineScope
+                }
+
+                "help" -> {
+                    println(helpText(availableCommands))
+                    continue
+                }
+            }
+
+            executeCommand(
+                commandArgs = rawInput.split(Regex("\\s+")).toTypedArray(),
+                commandParser = commandParser,
+                commandHandler = commandHandler,
+                outputFormatter = outputFormatter,
+            )
+        }
+    } finally {
+        notificationJob.cancel()
     }
 }
 
 private fun configureLogging() {
     System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "warn")
+    System.setProperty("org.slf4j.simpleLogger.log.io.modelcontextprotocol.kotlin.sdk.client.Client", "off")
+    System.setProperty("org.slf4j.simpleLogger.log.io.modelcontextprotocol.kotlin.sdk.shared.AbstractClientTransport", "off")
 }
 
 /**

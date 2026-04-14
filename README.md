@@ -1,224 +1,225 @@
 # ai_advent_day_18
 
-Р Р°СЃС€РёСЂСЏРµРјС‹Р№ sandbox-РїСЂРѕРµРєС‚ РЅР° Kotlin РґР»СЏ Р·РЅР°РєРѕРјСЃС‚РІР° СЃ MCP Рё РїРѕРґРіРѕС‚РѕРІРєРё Р±Р°Р·С‹ РїРѕРґ Р±СѓРґСѓС‰РёРµ Р°РіРµРЅС‚РЅС‹Рµ СЃС†РµРЅР°СЂРёРё.
+Учебный MCP sandbox на Kotlin/Ktor с двумя контурами:
 
-РЎРµР№С‡Р°СЃ РїСЂРѕРµРєС‚ РїСЂРѕС€С‘Р» РїСѓС‚СЊ РѕС‚ РјРёРЅРёРјР°Р»СЊРЅРѕРіРѕ `connect -> initialize -> tools/list` РґРѕ Р°РіРµРЅС‚РЅРѕР№ РјРѕРґРµР»Рё, РІ РєРѕС‚РѕСЂРѕР№:
+- `stateless` reference для обычных `tools/list` и `tools/call`;
+- `stateful` push-контур для серверных уведомлений через SSE.
 
-- Р°РіРµРЅС‚ СЃР°Рј РїРѕРґРіРѕС‚Р°РІР»РёРІР°РµС‚ MCP-РІРѕР·РјРѕР¶РЅРѕСЃС‚Рё РЅР° СЃС‚Р°СЂС‚Рµ;
-- РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ СѓРїСЂР°РІР»СЏРµС‚ РїРѕРґРєР»СЋС‡РµРЅРёРµРј РІСЂСѓС‡РЅСѓСЋ;
-- РґРѕСЃС‚СѓРїРЅС‹Рµ РєРѕРјР°РЅРґС‹ РїСѓР±Р»РёРєСѓСЋС‚СЃСЏ РїРѕРІРµСЂС… РЅР°Р№РґРµРЅРЅС‹С… MCP tools;
-- РјР°СЂС€СЂСѓС‚РёР·Р°С†РёСЏ РєРѕРјР°РЅРґС‹ РЅР° РЅСѓР¶РЅС‹Р№ MCP tool Рё СЃРµСЂРІРµСЂ РїСЂРѕРёСЃС…РѕРґРёС‚ РІРЅСѓС‚СЂРё Р°РіРµРЅС‚Р°.
+Проект показывает, как поверх одного CLI и одного agent/workflow-слоя поддерживать разные MCP runtime-подходы без дублирования всей верхней части приложения.
 
-## Р Р°Р·РІРёС‚РёРµ РїСЂРѕРµРєС‚Р°
+## Что умеет проект
 
-РќР° СЌС‚РѕРј СЌС‚Р°РїРµ РїСЂРѕРµРєС‚ СѓР¶Рµ СѓРјРµРµС‚:
+- поднимать локальный `stateless` MCP server;
+- поднимать отдельный `stateful` MCP server;
+- подключать общий CLI-клиент к обоим контурам;
+- вызывать обычные MCP tools для `JSONPlaceholder`;
+- запускать фоновый push-сценарий `start_random_posts`;
+- печатать `notifications/random_post` прямо в том же CLI.
 
-- РїРѕРґРЅРёРјР°С‚СЊ Р»РѕРєР°Р»СЊРЅС‹Р№ MCP server РЅР° Kotlin/Ktor;
-- РїРѕРґРєР»СЋС‡Р°С‚СЊ Рє РЅРµРјСѓ РєР»РёРµРЅС‚ С‡РµСЂРµР· Streamable HTTP;
-- РІС‹РїРѕР»РЅСЏС‚СЊ discovery СЃРµСЂРІРµСЂРЅС‹С… РІРѕР·РјРѕР¶РЅРѕСЃС‚РµР№;
-- РїСѓР±Р»РёРєРѕРІР°С‚СЊ РїСЂРёРєР»Р°РґРЅС‹Рµ РєРѕРјР°РЅРґС‹ РїРѕРІРµСЂС… MCP tools;
-- РІС‹Р·С‹РІР°С‚СЊ tools `fetch_post` Рё `list_posts` РїРѕРІРµСЂС… `JSONPlaceholder`;
-- РІС‹РїРѕР»РЅСЏС‚СЊ СЃС‚Р°СЂС‚РѕРІСѓСЋ РїРѕРґРіРѕС‚РѕРІРєСѓ Р°РіРµРЅС‚Р° РґРѕ РїРѕСЏРІР»РµРЅРёСЏ CLI prompt;
-- СЃС‚СЂРѕРёС‚СЊ capability mapping С‡РµСЂРµР· РѕС‚РґРµР»СЊРЅС‹Рµ command definitions СЃ СЏРІРЅС‹Рј routing.
+## Текущая архитектура
 
-РљР»СЋС‡РµРІС‹Рµ РёР·РјРµРЅРµРЅРёСЏ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ Р±РѕР»РµРµ СЂР°РЅРЅРµРіРѕ СЃРѕСЃС‚РѕСЏРЅРёСЏ РїСЂРѕРµРєС‚Р°:
-
-- РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёР№ `connect` СѓР±СЂР°РЅ РёР· РѕСЃРЅРѕРІРЅРѕРіРѕ CLI-СЃС†РµРЅР°СЂРёСЏ;
-- `tool post` Рё `tool posts` С‚РµРїРµСЂСЊ РґРѕСЃС‚СѓРїРЅС‹ С‡РµСЂРµР· capability snapshot Р°РіРµРЅС‚Р°;
-- `commandId` Рё `serverId` С‚РёРїРёР·РёСЂРѕРІР°РЅС‹;
-- РІРјРµСЃС‚Рѕ РѕР±С‰РµРіРѕ builder-Р° РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ command-definition СЃР»РѕР№.
-
-## Р§С‚Рѕ РІРЅСѓС‚СЂРё
-
-- Р»РѕРєР°Р»СЊРЅС‹Р№ MCP server РЅР° Kotlin/Ktor;
-- HTTP endpoint `http://127.0.0.1:3000/mcp`;
-- РґРµРјРѕРЅСЃС‚СЂР°С†РёРѕРЅРЅС‹Рµ РёРЅСЃС‚СЂСѓРјРµРЅС‚С‹ `ping` Рё `echo`;
-- РїСЂРёРєР»Р°РґРЅС‹Рµ РёРЅСЃС‚СЂСѓРјРµРЅС‚С‹ `fetch_post` Рё `list_posts`;
-- РёРЅС‚РµСЂР°РєС‚РёРІРЅС‹Р№ CLI-РєР»РёРµРЅС‚;
-- scripted smoke/e2e-РїСЂРѕРІРµСЂРєР°;
-- direct launcher-Р·Р°РїСѓСЃРє РґР»СЏ Windows Р±РµР· Gradle progress UI.
-
-## РўРµРєСѓС‰Р°СЏ Р°СЂС…РёС‚РµРєС‚СѓСЂР°
-
-РљР»РёРµРЅС‚СЃРєР°СЏ С‡Р°СЃС‚СЊ РѕСЂРіР°РЅРёР·РѕРІР°РЅР° РїРѕ С†РµРїРѕС‡РєРµ:
+Пользовательский поток остаётся общим:
 
 `presentation -> workflow -> agent -> mcp`
 
-Р РѕР»Рё СЃР»РѕС‘РІ:
+Разделение начинается внутри MCP-слоя:
 
-- `presentation` РїСЂРёРЅРёРјР°РµС‚ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёР№ РІРІРѕРґ Рё С„РѕСЂРјР°С‚РёСЂСѓРµС‚ РІС‹РІРѕРґ.
-- `workflow` РїРµСЂРµРІРѕРґРёС‚ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєСѓСЋ РєРѕРјР°РЅРґСѓ РІ РїСЂРёРєР»Р°РґРЅРѕР№ СЃС†РµРЅР°СЂРёР№.
-- `agent` С…СЂР°РЅРёС‚ capability snapshot, РІС‹Р±РёСЂР°РµС‚ РєРѕРјР°РЅРґСѓ, СЃРµСЂРІРµСЂ Рё MCP tool.
-- `mcp` РёРЅРєР°РїСЃСѓР»РёСЂСѓРµС‚ СЂР°Р±РѕС‚Сѓ СЃ Kotlin MCP SDK Рё transport-СѓСЂРѕРІРЅРµРј.
+- `mcp/client/common` и `mcp/server/common`
+  Общие модели, tool-call контракты и интеграция с `JSONPlaceholder`.
+- `mcp/client/stateless` и `mcp/server/stateless`
+  Базовый reference-контур на Streamable HTTP.
+- `mcp/client/stateful` и `mcp/server/stateful`
+  Контур с stateful session lifecycle и классическим SSE transport.
 
-## Pipeline
+Ключевая идея:
 
-РќРёР¶Рµ С‚РµРєСѓС‰РёР№ РїСѓС‚СЊ РѕС‚ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРѕРіРѕ РІРІРѕРґР° РґРѕ РІС‹РІРѕРґР° СЂРµР·СѓР»СЊС‚Р°С‚Р°.
+- `tool posts` и `tool post <postId>` идут в `stateless` сервер;
+- `tool start-random-posts [intervalMinutes]` идёт в `stateful` сервер;
+- CLI, workflow и agent при этом остаются общими.
 
-### 1. РЎС‚Р°СЂС‚ РїСЂРёР»РѕР¶РµРЅРёСЏ
+## Transport-подход
 
-- [App.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/App.kt)
-  РЎРѕР·РґР°С‘С‚ parser, workflow handler, formatter Рё Р·Р°РїСѓСЃРєР°РµС‚ СЃС‚Р°СЂС‚РѕРІСѓСЋ РїРѕРґРіРѕС‚РѕРІРєСѓ Р°РіРµРЅС‚Р°.
-- [DefaultWorkflowCommandHandler.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/workflow/service/DefaultWorkflowCommandHandler.kt)
-  РџРѕР»СѓС‡Р°РµС‚ `PrepareAgentCommand` Рё РґРµР»РµРіРёСЂСѓРµС‚ РїРѕРґРіРѕС‚РѕРІРєСѓ Р°РіРµРЅС‚Сѓ.
-- [DefaultAgent.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/agent/DefaultAgent.kt)
-  Р’С‹РїРѕР»РЅСЏРµС‚ `AgentRequest.Prepare`, РїСЂРѕС…РѕРґРёС‚ РїРѕ РёР·РІРµСЃС‚РЅС‹Рј MCP-СЃРµСЂРІРµСЂР°Рј Рё СЃРѕР±РёСЂР°РµС‚ snapshot РІРѕР·РјРѕР¶РЅРѕСЃС‚РµР№.
-- [DefaultMcpClient.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/mcp/client/DefaultMcpClient.kt)
-  Р”Р»СЏ РєР°Р¶РґРѕРіРѕ endpoint РґРµР»Р°РµС‚ protocol initialization Рё `tools/list`.
-- [AvailableAgentCommandResolver.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/agent/bootstrap/commands/AvailableAgentCommandResolver.kt)
-  РЎС‚СЂРѕРёС‚ СЃРїРёСЃРѕРє РґРѕСЃС‚СѓРїРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёС… РєРѕРјР°РЅРґ РёР· command definitions.
-- [AgentCapabilityRegistry.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/agent/bootstrap/AgentCapabilityRegistry.kt)
-  РЎРѕС…СЂР°РЅСЏРµС‚ Р°РєС‚СѓР°Р»СЊРЅС‹Р№ capability snapshot Р°РіРµРЅС‚Р°.
+- `stateless` контур использует Streamable HTTP.
+- `stateful` контур использует классический SSE transport:
+  - клиент открывает SSE-сессию;
+  - сервер держит session-aware runtime;
+  - push-события приходят как `notifications/random_post`.
 
-РРјРµРЅРЅРѕ Р·РґРµСЃСЊ СЃРµР№С‡Р°СЃ РїСЂРѕРёСЃС…РѕРґРёС‚ Р»РѕРіРёС‡РµСЃРєР°СЏ РїСЂРѕРІРµСЂРєР°, С‡С‚Рѕ Р°РіРµРЅС‚ "РїРѕРґРєР»СЋС‡РёР»СЃСЏ" Рё РіРѕС‚РѕРІ Рє СЂР°Р±РѕС‚Рµ: РµСЃР»Рё snapshot РЅРµ СЃРѕР±СЂР°РЅ, РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РєРѕРјР°РЅРґС‹ СЃС‡РёС‚Р°СЋС‚СЃСЏ РЅРµРґРѕСЃС‚СѓРїРЅС‹РјРё.
+Это сделано намеренно: базовый reference не усложняется, а push-сценарий живёт рядом как отдельный runtime.
 
-### 2. РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РІРІРѕРґРёС‚ РєРѕРјР°РЅРґСѓ
+## Локальные endpoints
 
-РџСЂРёРјРµСЂ:
+- `stateless`: `http://127.0.0.1:3000/mcp`
+- `stateful`: `http://127.0.0.1:3001/mcp`
 
-```text
-tool post 2
-```
+## CLI-команды
 
-- [App.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/App.kt)
-  Р§РёС‚Р°РµС‚ СЃС‚СЂРѕРєСѓ РёР· РєРѕРЅСЃРѕР»Рё Рё РїРµСЂРµРґР°С‘С‚ РµС‘ РІ parser.
-- [DefaultCliCommandParser.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/presentation/cli/DefaultCliCommandParser.kt)
-  Р Р°Р·Р±РёСЂР°РµС‚ CLI-РІРІРѕРґ Рё РїСЂРµРІСЂР°С‰Р°РµС‚ РµРіРѕ РІ `ToolPostCommand(postId = 2)`.
+После подготовки агента доступны:
 
-### 3. Workflow РїРµСЂРµРІРѕРґРёС‚ РІРІРѕРґ РІ Р°РіРµРЅС‚РЅС‹Р№ СЃС†РµРЅР°СЂРёР№
+- `tool posts`
+  Показать первые 10 публикаций из `JSONPlaceholder`.
+- `tool post <postId>`
+  Показать одну публикацию по идентификатору.
+- `tool start-random-posts [intervalMinutes]`
+  Включить push случайных публикаций в текущую клиентскую сессию.
+  Если команда вызывается повторно, интервал обновляется.
+- `help`
+  Показать список доступных команд.
+- `exit`
+  Завершить клиентскую сессию.
 
-- [DefaultWorkflowCommandHandler.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/workflow/service/DefaultWorkflowCommandHandler.kt)
-  Р”Р»СЏ `ToolPostCommand` СЃРѕР·РґР°С‘С‚ `AgentRequest.CallAvailableCommand` СЃ `AgentCommandId.TOOL_POST` Рё Р°СЂРіСѓРјРµРЅС‚Р°РјРё РєРѕРјР°РЅРґС‹.
+Ограничения текущего этапа:
 
-### 4. РђРіРµРЅС‚ РІС‹Р±РёСЂР°РµС‚ РєРѕРјР°РЅРґСѓ Рё РјР°СЂС€СЂСѓС‚
+- на `stateful` сервере есть только один tool: `start_random_posts`;
+- отдельного `stop_random_posts` пока нет;
+- остановка push привязана к завершению клиентской сессии.
 
-- [DefaultAgent.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/agent/DefaultAgent.kt)
-  РС‰РµС‚ РєРѕРјР°РЅРґСѓ РІ `AgentCapabilityRegistry`.
-- [ToolPostAgentCommandDefinition.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/agent/bootstrap/commands/ToolPostAgentCommandDefinition.kt)
-  РћРїРёСЃС‹РІР°РµС‚ РєРѕРјР°РЅРґСѓ `tool post <postId>`.
-- [CommandRouting.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/agent/bootstrap/commands/models/CommandRouting.kt)
-  РћРїСЂРµРґРµР»СЏРµС‚ РїСЂР°РІРёР»Рѕ РјР°СЂС€СЂСѓС‚РёР·Р°С†РёРё РєРѕРјР°РЅРґС‹ РЅР° СЃРµСЂРІРµСЂ.
+## Сборка
 
-Р•СЃР»Рё capability snapshot РїСѓСЃС‚РѕР№ РёР»Рё РєРѕРјР°РЅРґР° РЅРµ РЅР°Р№РґРµРЅР°, Р°РіРµРЅС‚ РІРѕР·РІСЂР°С‰Р°РµС‚ РїСЂРёРєР»Р°РґРЅСѓСЋ РѕС€РёР±РєСѓ. РўРѕ РµСЃС‚СЊ РїСЂРѕРІРµСЂРєР° РґРѕСЃС‚СѓРїРЅРѕСЃС‚Рё РєРѕРјР°РЅРґС‹ С‚РµРїРµСЂСЊ РЅР°С…РѕРґРёС‚СЃСЏ РІ Р°РіРµРЅС‚Рµ, Р° РЅРµ РІ `App`.
-
-### 5. MCP client РІС‹Р·С‹РІР°РµС‚ tool
-
-- [DefaultAgent.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/agent/DefaultAgent.kt)
-  РџСЂРµРІСЂР°С‰Р°РµС‚ РґРѕСЃС‚СѓРїРЅСѓСЋ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєСѓСЋ РєРѕРјР°РЅРґСѓ РІ `AgentRequest.CallTool`.
-- [DefaultMcpClient.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/mcp/client/DefaultMcpClient.kt)
-  РЎРѕР·РґР°С‘С‚ SDK client, РІС‹Р·С‹РІР°РµС‚ `tools/call`, РјР°РїРїРёС‚ РѕС‚РІРµС‚ РІ РїСЂРѕРµРєС‚РЅСѓСЋ РјРѕРґРµР»СЊ Рё Р·Р°РєСЂС‹РІР°РµС‚ СЃРѕРµРґРёРЅРµРЅРёРµ.
-
-### 6. РћС‚РІРµС‚ РёРґС‘С‚ РѕР±СЂР°С‚РЅРѕ Рє РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ
-
-- [DefaultAgent.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/agent/DefaultAgent.kt)
-  Р’РѕР·РІСЂР°С‰Р°РµС‚ `AgentResponse.ToolCallSuccess` РёР»Рё `AgentResponse.Failure`.
-- [DefaultWorkflowCommandHandler.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/workflow/service/DefaultWorkflowCommandHandler.kt)
-  РџСЂРµРѕР±СЂР°Р·СѓРµС‚ Р°РіРµРЅС‚РЅС‹Р№ РѕС‚РІРµС‚ РІ `ToolCallResult`.
-- [DefaultCliOutputFormatter.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/presentation/cli/DefaultCliOutputFormatter.kt)
-  Р¤РѕСЂРјР°С‚РёСЂСѓРµС‚ СЂРµР·СѓР»СЊС‚Р°С‚ РІ С‚РµРєСЃС‚ РґР»СЏ РєРѕРЅСЃРѕР»Рё.
-- [App.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/App.kt)
-  РџРµС‡Р°С‚Р°РµС‚ РёС‚РѕРіРѕРІС‹Р№ РІС‹РІРѕРґ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ.
-
-## РўСЂР°РЅСЃРїРѕСЂС‚
-
-РџСЂРѕРµРєС‚ РёСЃРїРѕР»СЊР·СѓРµС‚ Streamable HTTP transport. РќР° С‚РµРєСѓС‰РµРј СЌС‚Р°РїРµ СЃРµСЂРІРµСЂ РѕРїСѓР±Р»РёРєРѕРІР°РЅ С‡РµСЂРµР· stateless-РІР°СЂРёР°РЅС‚, РїРѕС‚РѕРјСѓ С‡С‚Рѕ РѕРЅ РїСЂРѕС‰Рµ РґР»СЏ РјРёРЅРёРјР°Р»СЊРЅРѕРіРѕ reference-СЃС†РµРЅР°СЂРёСЏ Рё РЅРµ С‚СЂРµР±СѓРµС‚ РѕС‚РґРµР»СЊРЅРѕРіРѕ server-side session lifecycle.
-
-## Р‘С‹СЃС‚СЂС‹Р№ СЃС‚Р°СЂС‚
-
-РЎР±РѕСЂРєР° РїСЂРѕРµРєС‚Р°:
+Базовая сборка:
 
 ```powershell
 .\gradlew.bat build
 ```
 
-РЎР±РѕСЂРєР° direct launcher-Р°СЂС‚РµС„Р°РєС‚РѕРІ:
+Сборка direct launcher-артефактов:
 
 ```powershell
-.\gradlew.bat installClientDist installServerDist
+.\gradlew.bat installClientDist installServerDist installStatefulServerDist
 ```
 
-РџРѕСЃР»Рµ СЌС‚РѕРіРѕ Р±СѓРґСѓС‚ РґРѕСЃС‚СѓРїРЅС‹:
+После этого будут доступны:
 
 - `build\install\mcp-client\bin\mcp-client.bat`
 - `build\install\mcp-server\bin\mcp-server.bat`
+- `build\install\mcp-stateful-server\bin\mcp-stateful-server.bat`
 
-Р СѓС‡РЅРѕР№ Р·Р°РїСѓСЃРє СЃРµСЂРІРµСЂР°:
+## Предпочтительный запуск
 
-```powershell
-.\build\install\mcp-server\bin\mcp-server.bat
-```
+Для ручной проверки в этом проекте предпочитается scripted/direct launcher workflow.
 
-Р СѓС‡РЅРѕР№ Р·Р°РїСѓСЃРє РєР»РёРµРЅС‚Р°:
-
-```powershell
-.\build\install\mcp-client\bin\mcp-client.bat
-```
-
-## РљРѕРјР°РЅРґС‹ РїСЂРѕРµРєС‚Р°
-
-РўРµС…РЅРёС‡РµСЃРєРёРµ Gradle entrypoint'С‹:
-
-```powershell
-.\gradlew.bat runServer
-.\gradlew.bat runClient
-```
-
-Scripted-Р·Р°РїСѓСЃРє РєР»РёРµРЅС‚Р° РґР»СЏ smoke/e2e:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\invoke-client-commands.ps1 -Commands help,"tool posts",exit
-```
-
-РџРѕРґРіРѕС‚РѕРІРєР° СЂСѓС‡РЅРѕР№ РїСЂРѕРІРµСЂРєРё РѕРґРЅРёРј Р·Р°РїСѓСЃРєРѕРј:
+Подготовить проект к ручной проверке:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1
 ```
 
-Р”Р»СЏ СЌС‚РѕРіРѕ СЂРµРїРѕР·РёС‚РѕСЂРёСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєР°СЏ С„СЂР°Р·Р° `СЃРѕР±РµСЂРё РїСЂРѕРµРєС‚` РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ С‚СЂР°РєС‚СѓРµС‚СЃСЏ РёРјРµРЅРЅРѕ РєР°Рє СЌС‚РѕС‚ workflow.
+Этот сценарий:
 
-Р—Р°РїСѓСЃРє СѓР¶Рµ СЃРѕР±СЂР°РЅРЅС‹С… Р°СЂС‚РµС„Р°РєС‚РѕРІ Р±РµР· РЅРѕРІРѕР№ СЃР±РѕСЂРєРё:
+- собирает проект;
+- поднимает `stateless` сервер;
+- поднимает `stateful` сервер;
+- открывает клиентский CLI.
+
+Запуск уже собранного проекта без нового build:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -SkipBuild
 ```
 
-Р”Р»СЏ СЌС‚РѕРіРѕ СЂРµРїРѕР·РёС‚РѕСЂРёСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєР°СЏ С„СЂР°Р·Р° `Р·Р°РїСѓСЃС‚Рё РїСЂРѕРµРєС‚` РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ С‚СЂР°РєС‚СѓРµС‚СЃСЏ РёРјРµРЅРЅРѕ РєР°Рє СЌС‚РѕС‚ РІР°СЂРёР°РЅС‚.
-
-РЎРєРІРѕР·РЅР°СЏ end-to-end РїСЂРѕРІРµСЂРєР°:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\check-e2e.ps1
-```
-
-Headless-РІР°СЂРёР°РЅС‚ СЂСѓС‡РЅРѕР№ РїСЂРѕРІРµСЂРєРё:
+Headless-вариант для воспроизводимой проверки:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1 -Headless
 ```
 
-## РџРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РєРѕРјР°РЅРґС‹ CLI
+Сквозная e2e-проверка:
 
-РџРѕСЃР»Рµ РїРѕРґРіРѕС‚РѕРІРєРё Р°РіРµРЅС‚Р° РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ РґРѕСЃС‚СѓРїРЅС‹:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\check-e2e.ps1
+```
 
-- `tool posts` вЂ” РїРѕРєР°Р·Р°С‚СЊ РїРµСЂРІС‹Рµ 10 РїСѓР±Р»РёРєР°С†РёР№ РёР· `JSONPlaceholder`;
-- `tool post <postId>` вЂ” РїРѕРєР°Р·Р°С‚СЊ РѕРґРЅСѓ РїСѓР±Р»РёРєР°С†РёСЋ РїРѕ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂСѓ;
-- `help` вЂ” РїРѕРєР°Р·Р°С‚СЊ СЃРїРёСЃРѕРє РґРѕСЃС‚СѓРїРЅС‹С… РєРѕРјР°РЅРґ;
-- `exit` вЂ” Р·Р°РІРµСЂС€РёС‚СЊ СЃРµСЃСЃРёСЋ РєР»РёРµРЅС‚Р°.
+## Ручной запуск по отдельности
 
-## Р”РѕРєСѓРјРµРЅС‚Р°С†РёСЏ
+`stateless` сервер:
 
-- РїСЂРѕРµРєС‚РЅС‹Р№ `MemoryBank`: [MemoryBank/README.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/MemoryBank/README.md)
-- preflight РґР»СЏ РЅРѕРІС‹С… СЃРµСЃСЃРёР№: [MemoryBank/agent-preflight.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/MemoryBank/agent-preflight.md)
-- РўР— РїРѕ MCP reference-С‡Р°СЃС‚Рё: [docs/technical-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/docs/technical-spec.md)
-- Р¶СѓСЂРЅР°Р» СЂРµР°Р»РёР·Р°С†РёРё MCP reference-С‡Р°СЃС‚Рё: [docs/mcp-reference-implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/docs/mcp-reference-implementation-log.md)
-- РўР— РїРѕ Р°РіРµРЅС‚РЅРѕР№ Р°СЂС…РёС‚РµРєС‚СѓСЂРµ: [docs/agent-architecture-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/docs/agent-architecture-spec.md)
-- Р¶СѓСЂРЅР°Р» СЂРµР°Р»РёР·Р°С†РёРё Р°РіРµРЅС‚РЅРѕР№ Р°СЂС…РёС‚РµРєС‚СѓСЂС‹: [docs/agent-architecture-implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/docs/agent-architecture-implementation-log.md)
-- РўР— РїРѕ РёРЅС‚РµРіСЂР°С†РёРё MCP tool: [docs/mcp-tool-integration-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/docs/mcp-tool-integration-spec.md)
-- Р¶СѓСЂРЅР°Р» СЂРµР°Р»РёР·Р°С†РёРё РёРЅС‚РµРіСЂР°С†РёРё MCP tool: [docs/mcp-tool-integration-implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/docs/mcp-tool-integration-implementation-log.md)
-- РєРѕРЅС‚СЂР°РєС‚ РїРµСЂРІРѕРіРѕ MCP tool: [docs/mcp-tool-integration-contract.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/docs/mcp-tool-integration-contract.md)
-- РўР— РїРѕ agent capability bootstrap: [docs/mcp-agent-capability-bootstrap-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/docs/mcp-agent-capability-bootstrap-spec.md)
-- capability model Р°РіРµРЅС‚Р°: [docs/mcp-agent-capability-model.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/docs/mcp-agent-capability-model.md)
-- Р¶СѓСЂРЅР°Р» СЂРµР°Р»РёР·Р°С†РёРё agent capability bootstrap: [docs/mcp-agent-capability-bootstrap-implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/docs/mcp-agent-capability-bootstrap-implementation-log.md)
-- РўР— РїРѕ refactor command definitions: [docs/agent-command-definition-refactor-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/docs/agent-command-definition-refactor-spec.md)
-- Р¶СѓСЂРЅР°Р» СЂРµР°Р»РёР·Р°С†РёРё refactor command definitions: [docs/agent-command-definition-refactor-implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/docs/agent-command-definition-refactor-implementation-log.md)
+```powershell
+.\build\install\mcp-server\bin\mcp-server.bat
+```
+
+`stateful` сервер:
+
+```powershell
+.\build\install\mcp-stateful-server\bin\mcp-stateful-server.bat
+```
+
+Клиент:
+
+```powershell
+.\build\install\mcp-client\bin\mcp-client.bat
+```
+
+Технические Gradle entrypoint'ы тоже есть, но они вторичны:
+
+```powershell
+.\gradlew.bat runServer
+.\gradlew.bat runStatefulServer
+.\gradlew.bat runClient
+```
+
+## Быстрый сценарий проверки push
+
+1. Подними проект через:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start-manual-check.ps1
+```
+
+2. В окне клиента выполни:
+
+```text
+help
+tool posts
+tool post 1
+tool start-random-posts 1
+```
+
+3. Ожидаемое поведение:
+
+- `tool posts` и `tool post 1` работают через `stateless` контур;
+- `tool start-random-posts 1` активирует push для текущей сессии;
+- дальше примерно раз в минуту в том же CLI появляются строки вида:
+
+```text
+[push] Случайная публикация #...
+```
+
+4. Остановка:
+
+```text
+exit
+```
+
+## Важные файлы
+
+- [App.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/App.kt)
+  Общий CLI entrypoint.
+- [McpProjectConfig.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/config/McpProjectConfig.kt)
+  Локальные endpoints и конфиг серверов.
+- [RoutingMcpClient.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/mcp/client/RoutingMcpClient.kt)
+  Маршрутизация между `stateless` и `stateful`.
+- [StatelessMcpClient.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/mcp/client/stateless/StatelessMcpClient.kt)
+  Клиент для базового reference-контура.
+- [StatefulMcpClient.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/mcp/client/stateful/StatefulMcpClient.kt)
+  Клиент с долгоживущей SSE-сессией.
+- [StatelessMcpServerApp.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/mcp/server/stateless/StatelessMcpServerApp.kt)
+  Entry point `stateless` сервера.
+- [StatefulMcpServerApp.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/mcp/server/stateful/StatefulMcpServerApp.kt)
+  Entry point `stateful` сервера.
+- [RandomPostTickerService.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/mcp/server/stateful/background/RandomPostTickerService.kt)
+  Фоновый ticker для push случайных публикаций.
+- [StartRandomPostsTool.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/src/main/kotlin/ru/compadre/mcp/mcp/server/stateful/toolcall/tools/startrandomposts/StartRandomPostsTool.kt)
+  Единственный tool `stateful` сервера.
+
+## Документация
+
+- [MemoryBank/README.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/MemoryBank/README.md)
+  Локальная карта памяти проекта.
+- [MemoryBank/agent-preflight.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/MemoryBank/agent-preflight.md)
+  Preflight-правила перед новыми крупными блоками.
+- [docs/technical-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/docs/technical-spec.md)
+  Базовое ТЗ reference-части.
+- [docs/stateful-random-post-push-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/docs/stateful-random-post-push-spec.md)
+  ТЗ для stateful push-контура.
+- [docs/stateful-random-post-push-implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_18/docs/stateful-random-post-push-implementation-log.md)
+  Журнал реализации stateful push-сценария.

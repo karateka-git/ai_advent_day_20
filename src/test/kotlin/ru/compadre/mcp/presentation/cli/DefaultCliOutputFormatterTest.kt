@@ -36,6 +36,29 @@ class DefaultCliOutputFormatterTest {
     }
 
     @Test
+    fun formatRendersPreparationWarnings() {
+        val result = AgentPreparationResult(
+            prepared = true,
+            warnings = listOf("Предупреждение: MCP-сервер `local_stateful_mcp_server` недоступен."),
+            availableCommands = listOf(
+                AvailableCliCommandResult(
+                    pattern = "tool posts",
+                    description = "Показать первые 10 публикаций.",
+                ),
+            ),
+        )
+
+        val expected = listOf(
+            "Агент готов к работе.",
+            "Предупреждение: MCP-сервер `local_stateful_mcp_server` недоступен.",
+            "Доступные команды:",
+            "tool posts - Показать первые 10 публикаций.",
+        ).joinToString(System.lineSeparator())
+
+        assertEquals(expected, formatter.format(result))
+    }
+
+    @Test
     fun formatRendersFailedPreparationResult() {
         val result = AgentPreparationResult(
             prepared = false,

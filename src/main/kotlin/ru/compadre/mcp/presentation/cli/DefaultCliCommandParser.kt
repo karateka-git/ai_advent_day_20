@@ -3,6 +3,7 @@ package ru.compadre.mcp.presentation.cli
 import ru.compadre.mcp.workflow.command.Command
 import ru.compadre.mcp.workflow.command.ToolPostCommand
 import ru.compadre.mcp.workflow.command.ToolPostsCommand
+import ru.compadre.mcp.workflow.command.ToolStartRandomPostsCommand
 
 /**
  * Стандартный CLI-разборщик пользовательских команд проекта.
@@ -14,13 +15,13 @@ class DefaultCliCommandParser : CliCommandParser {
             ?.trimStart('\uFEFF')
             ?.lowercase()
             ?: throw IllegalArgumentException(
-                "Команда не указана. Поддерживаемые команды: tool posts, tool post <postId>.",
+                "Команда не указана. Поддерживаемые команды: tool posts, tool post <postId>, tool start-random-posts [intervalMinutes].",
             )
 
         return when (rawCommand) {
             "tool" -> parseToolCommand(args)
             else -> throw IllegalArgumentException(
-                "Неизвестная команда клиента: `$rawCommand`. Поддерживаемые команды: tool posts, tool post <postId>.",
+                "Неизвестная команда клиента: `$rawCommand`. Поддерживаемые команды: tool posts, tool post <postId>, tool start-random-posts [intervalMinutes].",
             )
         }
     }
@@ -33,7 +34,7 @@ class DefaultCliCommandParser : CliCommandParser {
             ?.trim()
             ?.lowercase()
             ?: throw IllegalArgumentException(
-                "Не указано имя tool-команды. Поддерживаемые форматы: tool posts, tool post <postId>.",
+                "Не указано имя tool-команды. Поддерживаемые форматы: tool posts, tool post <postId>, tool start-random-posts [intervalMinutes].",
             )
 
         return when (toolName) {
@@ -47,8 +48,24 @@ class DefaultCliCommandParser : CliCommandParser {
                 ToolPostCommand(postId = postId)
             }
 
+            "start-random-posts" -> {
+                val intervalMinutes = args.getOrNull(2)?.let { rawInterval ->
+                    val parsedInterval = rawInterval.toIntOrNull()
+                        ?: throw IllegalArgumentException(
+                            "Для команды `tool start-random-posts` аргумент `[intervalMinutes]` должен быть целым числом.",
+                        )
+
+                    require(parsedInterval >= 1) {
+                        "Для команды `tool start-random-posts` аргумент `[intervalMinutes]` должен быть не меньше 1."
+                    }
+                    parsedInterval
+                }
+
+                ToolStartRandomPostsCommand(intervalMinutes = intervalMinutes)
+            }
+
             else -> throw IllegalArgumentException(
-                "Неизвестная tool-команда: `$toolName`. Поддерживаемые форматы: tool posts, tool post <postId>.",
+                "Неизвестная tool-команда: `$toolName`. Поддерживаемые форматы: tool posts, tool post <postId>, tool start-random-posts [intervalMinutes].",
             )
         }
     }

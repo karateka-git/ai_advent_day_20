@@ -1,9 +1,9 @@
 package ru.compadre.mcp.agent
 
 import ru.compadre.mcp.agent.bootstrap.models.AgentCapabilitySnapshot
-import ru.compadre.mcp.mcp.client.model.McpServerInfo
-import ru.compadre.mcp.mcp.client.model.McpToolDescriptor
-import ru.compadre.mcp.mcp.toolcall.models.McpToolCallResult
+import ru.compadre.mcp.mcp.client.common.model.McpServerInfo
+import ru.compadre.mcp.mcp.client.common.model.McpToolDescriptor
+import ru.compadre.mcp.mcp.client.common.toolcall.model.McpToolCallResult
 
 /**
  * Базовый контракт ответа агента.

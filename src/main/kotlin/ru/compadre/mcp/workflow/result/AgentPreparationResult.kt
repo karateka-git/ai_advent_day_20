@@ -6,6 +6,7 @@ package ru.compadre.mcp.workflow.result
 data class AgentPreparationResult(
     val prepared: Boolean,
     val availableCommands: List<AvailableCliCommandResult> = emptyList(),
+    val warnings: List<String> = emptyList(),
     val errorMessage: String? = null,
 ) : CommandResult
 

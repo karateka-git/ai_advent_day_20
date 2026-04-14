@@ -1,7 +1,7 @@
 package ru.compadre.mcp.agent.bootstrap.models
 
-import ru.compadre.mcp.mcp.client.model.McpServerInfo
-import ru.compadre.mcp.mcp.client.model.McpToolDescriptor
+import ru.compadre.mcp.mcp.client.common.model.McpServerInfo
+import ru.compadre.mcp.mcp.client.common.model.McpToolDescriptor
 
 /**
  * Результат подготовки одного MCP-сервера внутри capability-модели агента.

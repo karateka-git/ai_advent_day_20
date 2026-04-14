@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 import ru.compadre.mcp.agent.bootstrap.models.AgentCommandId
 import ru.compadre.mcp.agent.bootstrap.models.McpServerId
 import ru.compadre.mcp.agent.bootstrap.models.PreparedMcpServer
-import ru.compadre.mcp.mcp.client.model.McpToolDescriptor
+import ru.compadre.mcp.mcp.client.common.model.McpToolDescriptor
 
 class AvailableAgentCommandResolverTest {
     @Test
@@ -25,12 +25,20 @@ class AvailableAgentCommandResolverTest {
                         McpToolDescriptor(name = "fetch_post", title = "Fetch Post"),
                     ),
                 ),
+                PreparedMcpServer(
+                    serverId = McpServerId.LOCAL_STATEFUL_MCP_SERVER,
+                    endpoint = "http://127.0.0.1:3001/mcp",
+                    prepared = true,
+                    tools = listOf(
+                        McpToolDescriptor(name = "start_random_posts", title = "Start Random Posts"),
+                    ),
+                ),
             ),
         )
 
-        assertEquals(2, result.size)
+        assertEquals(3, result.size)
         assertEquals(AgentCommandId.TOOL_POSTS, result.first().commandId)
-        assertEquals("tool post <postId>", result.last().cliPattern)
+        assertEquals("tool start-random-posts [intervalMinutes]", result.last().cliPattern)
     }
 
     @Test

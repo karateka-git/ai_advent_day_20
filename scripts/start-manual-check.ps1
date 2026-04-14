@@ -49,44 +49,35 @@ function Wait-Port {
 }
 
 function Get-ClientBatPath {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$ProjectRoot
-    )
-
-    return Join-Path $ProjectRoot "build\install\mcp-client\bin\mcp-client.bat"
+    param([Parameter(Mandatory = $true)][string]$ProjectRoot)
+    Join-Path $ProjectRoot "build\install\mcp-client\bin\mcp-client.bat"
 }
 
 function Get-ServerBatPath {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$ProjectRoot
-    )
+    param([Parameter(Mandatory = $true)][string]$ProjectRoot)
+    Join-Path $ProjectRoot "build\install\mcp-server\bin\mcp-server.bat"
+}
 
-    return Join-Path $ProjectRoot "build\install\mcp-server\bin\mcp-server.bat"
+function Get-StatefulServerBatPath {
+    param([Parameter(Mandatory = $true)][string]$ProjectRoot)
+    Join-Path $ProjectRoot "build\install\mcp-stateful-server\bin\mcp-stateful-server.bat"
 }
 
 function Assert-LauncherExists {
     param(
-        [Parameter(Mandatory = $true)]
-        [string]$Path,
-
-        [Parameter(Mandatory = $true)]
-        [string]$Description
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)][string]$Description
     )
 
     if (-not (Test-Path -LiteralPath $Path)) {
-        throw "$Description not found: $Path. Run .\gradlew.bat build, .\gradlew.bat installClientDist and .\gradlew.bat installServerDist first."
+        throw "$Description not found: $Path. Run .\gradlew.bat build, .\gradlew.bat installClientDist, .\gradlew.bat installServerDist and .\gradlew.bat installStatefulServerDist first."
     }
 }
 
 function New-Utf8ShellCommand {
     param(
-        [Parameter(Mandatory = $true)]
-        [string]$ProjectRoot,
-
-        [Parameter(Mandatory = $true)]
-        [string]$BatPath
+        [Parameter(Mandatory = $true)][string]$ProjectRoot,
+        [Parameter(Mandatory = $true)][string]$BatPath
     )
 
     $escapedProjectRoot = $ProjectRoot.Replace("'", "''")
@@ -104,22 +95,15 @@ Set-Location '$escapedProjectRoot'
 
 function Start-HeadlessLauncherProcess {
     param(
-        [Parameter(Mandatory = $true)]
-        [string]$ProjectRoot,
-
-        [Parameter(Mandatory = $true)]
-        [string]$BatPath,
-
-        [Parameter(Mandatory = $true)]
-        [string]$StdoutPath,
-
-        [Parameter(Mandatory = $true)]
-        [string]$StderrPath
+        [Parameter(Mandatory = $true)][string]$ProjectRoot,
+        [Parameter(Mandatory = $true)][string]$BatPath,
+        [Parameter(Mandatory = $true)][string]$StdoutPath,
+        [Parameter(Mandatory = $true)][string]$StderrPath
     )
 
     $command = "chcp 65001>nul && `"$BatPath`""
 
-    return Start-Process `
+    Start-Process `
         -FilePath "cmd.exe" `
         -ArgumentList "/c", $command `
         -WorkingDirectory $ProjectRoot `
@@ -129,10 +113,7 @@ function Start-HeadlessLauncherProcess {
 }
 
 function Stop-HeadlessLauncherProcess {
-    param(
-        [Parameter(Mandatory = $true)]
-        [System.Diagnostics.Process]$Process
-    )
+    param([System.Diagnostics.Process]$Process)
 
     if ($Process) {
         try {
@@ -147,19 +128,14 @@ function Stop-HeadlessLauncherProcess {
 
 function Invoke-Utf8ClientCommands {
     param(
-        [Parameter(Mandatory = $true)]
-        [string]$ProjectRoot,
-
-        [Parameter(Mandatory = $true)]
-        [string]$StdoutPath,
-
-        [Parameter(Mandatory = $true)]
-        [string]$StderrPath
+        [Parameter(Mandatory = $true)][string]$ProjectRoot,
+        [Parameter(Mandatory = $true)][string]$StdoutPath,
+        [Parameter(Mandatory = $true)][string]$StderrPath
     )
 
     $null = & powershell -ExecutionPolicy Bypass -File (Join-Path $ProjectRoot "scripts\invoke-client-commands.ps1") `
         -ProjectRoot $ProjectRoot `
-        -Commands @("help", "tool posts", "exit") `
+        -Commands @("help", "tool posts", "tool start-random-posts 1", "exit") `
         -StdoutPath $StdoutPath `
         -StderrPath $StderrPath
 
@@ -178,14 +154,16 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $projectRoot
 
 $serverHost = "127.0.0.1"
-$serverPort = 3000
-$serverEndpoint = "http://$serverHost`:$serverPort/mcp"
+$statelessServerPort = 3000
+$statefulServerPort = 3001
+$statelessEndpoint = "http://$serverHost`:$statelessServerPort/mcp"
+$statefulEndpoint = "http://$serverHost`:$statefulServerPort/mcp"
 
 if ($SkipBuild) {
     Write-Output "Skipping build step and reusing existing artifacts..."
 } else {
     Write-Output "Building project and direct launchers..."
-    & .\gradlew.bat build installClientDist installServerDist
+    & .\gradlew.bat build installClientDist installServerDist installStatefulServerDist
     if ($LASTEXITCODE -ne 0) {
         throw "Build failed with exit code $LASTEXITCODE."
     }
@@ -193,10 +171,14 @@ if ($SkipBuild) {
 
 $clientBatPath = Get-ClientBatPath -ProjectRoot $projectRoot
 $serverBatPath = Get-ServerBatPath -ProjectRoot $projectRoot
-Assert-LauncherExists -Path $clientBatPath -Description "Built client launcher"
-Assert-LauncherExists -Path $serverBatPath -Description "Built server launcher"
+$statefulServerBatPath = Get-StatefulServerBatPath -ProjectRoot $projectRoot
 
-Stop-ListeningProcess -Port $serverPort
+Assert-LauncherExists -Path $clientBatPath -Description "Built client launcher"
+Assert-LauncherExists -Path $serverBatPath -Description "Built stateless server launcher"
+Assert-LauncherExists -Path $statefulServerBatPath -Description "Built stateful server launcher"
+
+Stop-ListeningProcess -Port $statelessServerPort
+Stop-ListeningProcess -Port $statefulServerPort
 
 if ($Headless) {
     $tmpDir = Join-Path $projectRoot "build\tmp\manual-check"
@@ -204,10 +186,12 @@ if ($Headless) {
 
     $serverStdout = Join-Path $tmpDir "server.out"
     $serverStderr = Join-Path $tmpDir "server.err"
+    $statefulServerStdout = Join-Path $tmpDir "stateful-server.out"
+    $statefulServerStderr = Join-Path $tmpDir "stateful-server.err"
     $clientStdout = Join-Path $tmpDir "client.out"
     $clientStderr = Join-Path $tmpDir "client.err"
 
-    @($serverStdout, $serverStderr, $clientStdout, $clientStderr) | ForEach-Object {
+    @($serverStdout, $serverStderr, $statefulServerStdout, $statefulServerStderr, $clientStdout, $clientStderr) | ForEach-Object {
         if (Test-Path $_) {
             try {
                 Remove-Item $_ -Force
@@ -218,6 +202,7 @@ if ($Headless) {
     }
 
     $serverProcess = $null
+    $statefulServerProcess = $null
 
     try {
         $serverProcess = Start-HeadlessLauncherProcess `
@@ -226,15 +211,24 @@ if ($Headless) {
             -StdoutPath $serverStdout `
             -StderrPath $serverStderr
 
-        Wait-Port -TargetHost $serverHost -Port $serverPort
+        $statefulServerProcess = Start-HeadlessLauncherProcess `
+            -ProjectRoot $projectRoot `
+            -BatPath $statefulServerBatPath `
+            -StdoutPath $statefulServerStdout `
+            -StderrPath $statefulServerStderr
 
-        Write-Output "Server is ready at $serverEndpoint"
+        Wait-Port -TargetHost $serverHost -Port $statelessServerPort
+        Wait-Port -TargetHost $serverHost -Port $statefulServerPort
+
+        Write-Output "Stateless server is ready at $statelessEndpoint"
+        Write-Output "Stateful server is ready at $statefulEndpoint"
         Write-Output "Running client in current console..."
 
         $clientExitCode = Invoke-Utf8ClientCommands `
             -ProjectRoot $projectRoot `
             -StdoutPath $clientStdout `
             -StderrPath $clientStderr
+
         if ($clientExitCode -ne 0) {
             throw "Client failed with exit code $clientExitCode."
         }
@@ -242,28 +236,35 @@ if ($Headless) {
         if ($serverProcess) {
             Stop-HeadlessLauncherProcess -Process $serverProcess
         }
+        if ($statefulServerProcess) {
+            Stop-HeadlessLauncherProcess -Process $statefulServerProcess
+        }
 
-        Stop-ListeningProcess -Port $serverPort
+        Stop-ListeningProcess -Port $statelessServerPort
+        Stop-ListeningProcess -Port $statefulServerPort
     }
 
     return
 }
 
-$serverCommand = New-Utf8ShellCommand `
-    -ProjectRoot $projectRoot `
-    -BatPath $serverBatPath
+$serverCommand = New-Utf8ShellCommand -ProjectRoot $projectRoot -BatPath $serverBatPath
+$statefulServerCommand = New-Utf8ShellCommand -ProjectRoot $projectRoot -BatPath $statefulServerBatPath
+$clientCommand = New-Utf8ShellCommand -ProjectRoot $projectRoot -BatPath $clientBatPath
 
-$clientCommand = New-Utf8ShellCommand `
-    -ProjectRoot $projectRoot `
-    -BatPath $clientBatPath
-
-Write-Output "Opening server window..."
+Write-Output "Opening stateless server window..."
 $serverWindow = Start-Process powershell `
     -ArgumentList "-NoExit", "-Command", $serverCommand `
     -WorkingDirectory $projectRoot `
     -PassThru
 
-Wait-Port -TargetHost $serverHost -Port $serverPort
+Write-Output "Opening stateful server window..."
+$statefulServerWindow = Start-Process powershell `
+    -ArgumentList "-NoExit", "-Command", $statefulServerCommand `
+    -WorkingDirectory $projectRoot `
+    -PassThru
+
+Wait-Port -TargetHost $serverHost -Port $statelessServerPort
+Wait-Port -TargetHost $serverHost -Port $statefulServerPort
 
 Write-Output "Opening client window..."
 $clientWindow = Start-Process powershell `
@@ -272,6 +273,8 @@ $clientWindow = Start-Process powershell `
     -PassThru
 
 Write-Output "Manual check environment is ready."
-Write-Output "Server window PID: $($serverWindow.Id)"
+Write-Output "Stateless server window PID: $($serverWindow.Id)"
+Write-Output "Stateful server window PID: $($statefulServerWindow.Id)"
 Write-Output "Client window PID: $($clientWindow.Id)"
-Write-Output "Endpoint: $serverEndpoint"
+Write-Output "Stateless endpoint: $statelessEndpoint"
+Write-Output "Stateful endpoint: $statefulEndpoint"

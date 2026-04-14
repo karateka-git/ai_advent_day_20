@@ -7,7 +7,7 @@ import ru.compadre.mcp.agent.bootstrap.models.AgentCommandId
 import ru.compadre.mcp.agent.bootstrap.models.KnownMcpServer
 import ru.compadre.mcp.agent.bootstrap.models.PreparedMcpServer
 import ru.compadre.mcp.mcp.client.McpClient
-import ru.compadre.mcp.mcp.toolcall.models.McpToolCallRequest
+import ru.compadre.mcp.mcp.client.common.toolcall.model.McpToolCallRequest
 
 /**
  * Стандартная реализация агентного слоя поверх проектного MCP-клиента.

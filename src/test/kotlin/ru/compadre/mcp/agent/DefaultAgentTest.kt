@@ -9,11 +9,11 @@ import ru.compadre.mcp.agent.bootstrap.models.AgentCommandId
 import ru.compadre.mcp.agent.bootstrap.models.KnownMcpServer
 import ru.compadre.mcp.agent.bootstrap.models.McpServerId
 import ru.compadre.mcp.mcp.client.McpClient
-import ru.compadre.mcp.mcp.client.model.McpConnectionSnapshot
-import ru.compadre.mcp.mcp.client.model.McpServerInfo
-import ru.compadre.mcp.mcp.client.model.McpToolDescriptor
-import ru.compadre.mcp.mcp.toolcall.models.McpToolCallRequest
-import ru.compadre.mcp.mcp.toolcall.models.McpToolCallResult
+import ru.compadre.mcp.mcp.client.common.model.McpConnectionSnapshot
+import ru.compadre.mcp.mcp.client.common.model.McpServerInfo
+import ru.compadre.mcp.mcp.client.common.model.McpToolDescriptor
+import ru.compadre.mcp.mcp.client.common.toolcall.model.McpToolCallRequest
+import ru.compadre.mcp.mcp.client.common.toolcall.model.McpToolCallResult
 
 class DefaultAgentTest {
     @Test

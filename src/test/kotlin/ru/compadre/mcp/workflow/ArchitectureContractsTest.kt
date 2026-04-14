@@ -10,14 +10,15 @@ import ru.compadre.mcp.agent.bootstrap.models.AgentCommandId
 import ru.compadre.mcp.agent.bootstrap.models.KnownMcpServer
 import ru.compadre.mcp.agent.bootstrap.models.McpServerId
 import ru.compadre.mcp.agent.bootstrap.models.PreparedMcpServer
-import ru.compadre.mcp.mcp.client.model.McpServerInfo
-import ru.compadre.mcp.mcp.client.model.McpToolDescriptor
-import ru.compadre.mcp.mcp.toolcall.models.McpToolCallRequest
-import ru.compadre.mcp.mcp.toolcall.models.McpToolCallResult
+import ru.compadre.mcp.mcp.client.common.model.McpServerInfo
+import ru.compadre.mcp.mcp.client.common.model.McpToolDescriptor
+import ru.compadre.mcp.mcp.client.common.toolcall.model.McpToolCallRequest
+import ru.compadre.mcp.mcp.client.common.toolcall.model.McpToolCallResult
 import ru.compadre.mcp.workflow.command.Command
 import ru.compadre.mcp.workflow.command.PrepareAgentCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand
 import ru.compadre.mcp.workflow.command.ToolPostsCommand
+import ru.compadre.mcp.workflow.command.ToolStartRandomPostsCommand
 import ru.compadre.mcp.workflow.result.AgentPreparationResult
 import ru.compadre.mcp.workflow.result.AvailableCliCommandResult
 import ru.compadre.mcp.workflow.result.CommandResult
@@ -61,6 +62,14 @@ class ArchitectureContractsTest {
         val command: Command = ToolPostsCommand
 
         assertEquals(ToolPostsCommand, command)
+    }
+
+    @Test
+    fun toolStartRandomPostsCommandImplementsBaseCommandContract() {
+        val command: Command = ToolStartRandomPostsCommand(intervalMinutes = 5)
+
+        assertIs<ToolStartRandomPostsCommand>(command)
+        assertEquals(5, command.intervalMinutes)
     }
 
     @Test
@@ -115,12 +124,17 @@ class ArchitectureContractsTest {
                     serverId = McpServerId.LOCAL_MCP_SERVER,
                     endpoint = "http://127.0.0.1:3000/mcp",
                 ),
+                KnownMcpServer(
+                    serverId = McpServerId.LOCAL_STATEFUL_MCP_SERVER,
+                    endpoint = "http://127.0.0.1:3001/mcp",
+                ),
             ),
         )
 
         assertIs<AgentRequest.Prepare>(request)
-        assertEquals(1, request.servers.size)
-        assertEquals(McpServerId.LOCAL_MCP_SERVER, request.servers.single().serverId)
+        assertEquals(2, request.servers.size)
+        assertEquals(McpServerId.LOCAL_MCP_SERVER, request.servers.first().serverId)
+        assertEquals(McpServerId.LOCAL_STATEFUL_MCP_SERVER, request.servers.last().serverId)
     }
 
     @Test

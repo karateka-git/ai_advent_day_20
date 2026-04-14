@@ -41,9 +41,17 @@ tasks.named<CreateStartScripts>("startScripts") {
 
 val serverStartScripts = tasks.register<CreateStartScripts>("serverStartScripts") {
     applicationName = "mcp-server"
-    mainClass = "ru.compadre.mcp.mcp.server.McpServerAppKt"
+    mainClass = "ru.compadre.mcp.mcp.server.stateless.StatelessMcpServerAppKt"
     classpath = packagedRuntimeClasspath
     outputDir = layout.buildDirectory.dir("generated/server-start-scripts").get().asFile
+    defaultJvmOpts = launcherJvmArgs
+}
+
+val statefulServerStartScripts = tasks.register<CreateStartScripts>("statefulServerStartScripts") {
+    applicationName = "mcp-stateful-server"
+    mainClass = "ru.compadre.mcp.mcp.server.stateful.StatefulMcpServerAppKt"
+    classpath = packagedRuntimeClasspath
+    outputDir = layout.buildDirectory.dir("generated/stateful-server-start-scripts").get().asFile
     defaultJvmOpts = launcherJvmArgs
 }
 
@@ -55,7 +63,14 @@ tasks.register<JavaExec>("runServer") {
     group = "application"
     description = "Runs the MCP server entrypoint."
     classpath = sourceSets["main"].runtimeClasspath
-    mainClass.set("ru.compadre.mcp.mcp.server.McpServerAppKt")
+    mainClass.set("ru.compadre.mcp.mcp.server.stateless.StatelessMcpServerAppKt")
+}
+
+tasks.register<JavaExec>("runStatefulServer") {
+    group = "application"
+    description = "Runs the stateful MCP server entrypoint."
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("ru.compadre.mcp.mcp.server.stateful.StatefulMcpServerAppKt")
 }
 
 tasks.register<JavaExec>("runClient") {
@@ -90,6 +105,23 @@ tasks.register<Sync>("installServerDist") {
     into(layout.buildDirectory.dir("install/mcp-server"))
 
     from(serverStartScripts) {
+        into("bin")
+    }
+    from(tasks.named<Jar>("jar")) {
+        into("lib")
+    }
+    from(configurations.runtimeClasspath) {
+        into("lib")
+    }
+}
+
+tasks.register<Sync>("installStatefulServerDist") {
+    group = "distribution"
+    description = "Builds a direct stateful server launcher distribution."
+    dependsOn(tasks.named("jar"), statefulServerStartScripts)
+    into(layout.buildDirectory.dir("install/mcp-stateful-server"))
+
+    from(statefulServerStartScripts) {
         into("bin")
     }
     from(tasks.named<Jar>("jar")) {

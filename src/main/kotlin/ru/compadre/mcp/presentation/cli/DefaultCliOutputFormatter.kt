@@ -26,6 +26,9 @@ class DefaultCliOutputFormatter : CliOutputFormatter {
 
         return buildList {
             add("Агент готов к работе.")
+            result.warnings.forEach { warning ->
+                add(warning)
+            }
 
             if (result.availableCommands.isEmpty()) {
                 add("Пользовательские команды не найдены.")

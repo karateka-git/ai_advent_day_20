@@ -4,11 +4,13 @@ import ru.compadre.mcp.agent.Agent
 import ru.compadre.mcp.agent.AgentRequest
 import ru.compadre.mcp.agent.AgentResponse
 import ru.compadre.mcp.agent.bootstrap.models.AgentCommandId
+import ru.compadre.mcp.agent.bootstrap.models.PreparedMcpServer
 import ru.compadre.mcp.config.McpProjectConfig
 import ru.compadre.mcp.workflow.command.Command
 import ru.compadre.mcp.workflow.command.PrepareAgentCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand
 import ru.compadre.mcp.workflow.command.ToolPostsCommand
+import ru.compadre.mcp.workflow.command.ToolStartRandomPostsCommand
 import ru.compadre.mcp.workflow.result.AgentPreparationResult
 import ru.compadre.mcp.workflow.result.AvailableCliCommandResult
 import ru.compadre.mcp.workflow.result.CommandResult
@@ -24,6 +26,7 @@ class DefaultWorkflowCommandHandler(
         PrepareAgentCommand -> handlePrepareAgent()
         is ToolPostCommand -> handleToolPost(command)
         ToolPostsCommand -> handleToolPosts()
+        is ToolStartRandomPostsCommand -> handleToolStartRandomPosts(command)
     }
 
     /**
@@ -39,6 +42,9 @@ class DefaultWorkflowCommandHandler(
                         description = command.description,
                     )
                 },
+                warnings = response.snapshot.servers
+                    .filterNot { it.prepared }
+                    .map(::preparationWarningFor),
             )
 
             is AgentResponse.Failure -> AgentPreparationResult(
@@ -138,5 +144,61 @@ class DefaultWorkflowCommandHandler(
                 errorMessage = "Агент вернул результат подготовки вместо сценария вызова пользовательской команды.",
             )
         }
+    }
+
+    /**
+     * Делегирует запуск stateful random-post push агенту по стабильному commandId.
+     */
+    private suspend fun handleToolStartRandomPosts(command: ToolStartRandomPostsCommand): ToolCallResult {
+        val commandText = buildString {
+            append("tool start-random-posts")
+            command.intervalMinutes?.let { append(" $it") }
+        }
+        val arguments = command.intervalMinutes?.let { mapOf("intervalMinutes" to it) } ?: emptyMap()
+
+        return when (
+            val response = agent.handle(
+                AgentRequest.CallAvailableCommand(
+                    commandId = AgentCommandId.TOOL_START_RANDOM_POSTS,
+                    arguments = arguments,
+                ),
+            )
+        ) {
+            is AgentResponse.ToolCallSuccess -> ToolCallResult(
+                commandText = commandText,
+                successful = !response.result.isError,
+                content = response.result.content,
+                errorMessage = response.result.content.takeIf { response.result.isError }
+                    ?.joinToString(separator = System.lineSeparator()),
+            )
+
+            is AgentResponse.Failure -> ToolCallResult(
+                commandText = commandText,
+                successful = false,
+                errorMessage = response.message,
+            )
+
+            is AgentResponse.ConnectSuccess -> ToolCallResult(
+                commandText = commandText,
+                successful = false,
+                errorMessage = "Агент вернул результат подключения для сценария вызова пользовательской команды.",
+            )
+
+            is AgentResponse.PreparationSuccess -> ToolCallResult(
+                commandText = commandText,
+                successful = false,
+                errorMessage = "Агент вернул результат подготовки вместо сценария вызова пользовательской команды.",
+            )
+        }
+    }
+
+    private fun preparationWarningFor(server: PreparedMcpServer): String {
+        val reason = when {
+            server.errorMessage.isNullOrBlank() -> "причина недоступности не указана"
+            "connection refused" in server.errorMessage.lowercase() -> "соединение отклонено"
+            else -> server.errorMessage
+        }
+
+        return "Предупреждение: MCP-сервер `${server.serverId.value}` по адресу `${server.endpoint}` недоступен. Команды этого контура скрыты. Причина: $reason."
     }
 }

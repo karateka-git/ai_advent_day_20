@@ -2,7 +2,7 @@ package ru.compadre.mcp.agent
 
 import ru.compadre.mcp.agent.bootstrap.models.AgentCommandId
 import ru.compadre.mcp.agent.bootstrap.models.KnownMcpServer
-import ru.compadre.mcp.mcp.toolcall.models.McpToolCallRequest
+import ru.compadre.mcp.mcp.client.common.toolcall.model.McpToolCallRequest
 
 /**
  * Базовый контракт запроса к агенту.

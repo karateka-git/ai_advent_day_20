@@ -11,10 +11,11 @@ import ru.compadre.mcp.agent.bootstrap.models.AgentCapabilitySnapshot
 import ru.compadre.mcp.agent.bootstrap.models.AgentCommandId
 import ru.compadre.mcp.agent.bootstrap.models.AvailableAgentCommand
 import ru.compadre.mcp.agent.bootstrap.models.McpServerId
-import ru.compadre.mcp.mcp.toolcall.models.McpToolCallResult
+import ru.compadre.mcp.mcp.client.common.toolcall.model.McpToolCallResult
 import ru.compadre.mcp.workflow.command.PrepareAgentCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand
 import ru.compadre.mcp.workflow.command.ToolPostsCommand
+import ru.compadre.mcp.workflow.command.ToolStartRandomPostsCommand
 import ru.compadre.mcp.workflow.result.AgentPreparationResult
 import ru.compadre.mcp.workflow.result.ToolCallResult
 import ru.compadre.mcp.workflow.service.DefaultWorkflowCommandHandler
@@ -51,6 +52,7 @@ class DefaultWorkflowCommandHandlerTest {
         assertEquals(true, result.prepared)
         assertEquals(1, result.availableCommands.size)
         assertEquals("tool posts", result.availableCommands.single().pattern)
+        assertEquals(emptyList(), result.warnings)
     }
 
     @Test
@@ -67,6 +69,41 @@ class DefaultWorkflowCommandHandlerTest {
         assertIs<AgentPreparationResult>(result)
         assertEquals(false, result.prepared)
         assertEquals("agent failure", result.errorMessage)
+    }
+
+    @Test
+    fun prepareAgentCommandExposesWarningsForUnavailableServers() = runBlocking {
+        val handler = DefaultWorkflowCommandHandler(
+            agent = object : Agent {
+                override suspend fun handle(request: AgentRequest): AgentResponse {
+                    assertIs<AgentRequest.Prepare>(request)
+
+                    return AgentResponse.PreparationSuccess(
+                        snapshot = AgentCapabilitySnapshot(
+                            servers = listOf(
+                                ru.compadre.mcp.agent.bootstrap.models.PreparedMcpServer(
+                                    serverId = McpServerId.LOCAL_STATEFUL_MCP_SERVER,
+                                    endpoint = "http://127.0.0.1:3001/mcp",
+                                    prepared = false,
+                                    errorMessage = "Connection refused: getsockopt",
+                                ),
+                            ),
+                        ),
+                    )
+                }
+            },
+        )
+
+        val result = handler.handle(PrepareAgentCommand)
+
+        assertIs<AgentPreparationResult>(result)
+        assertEquals(true, result.prepared)
+        assertEquals(
+            listOf(
+                "Предупреждение: MCP-сервер `local_stateful_mcp_server` по адресу `http://127.0.0.1:3001/mcp` недоступен. Команды этого контура скрыты. Причина: соединение отклонено.",
+            ),
+            result.warnings,
+        )
     }
 
     @Test
@@ -142,5 +179,61 @@ class DefaultWorkflowCommandHandlerTest {
         assertEquals(true, result.successful)
         assertEquals("tool posts", result.commandText)
         assertEquals(listOf("Первые 10 публикаций:", "1. sunt aut facere"), result.content)
+    }
+
+    @Test
+    fun toolStartRandomPostsCommandUsesAvailableCommandRouting() = runBlocking {
+        val handler = DefaultWorkflowCommandHandler(
+            agent = object : Agent {
+                override suspend fun handle(request: AgentRequest): AgentResponse {
+                    val toolRequest = request as AgentRequest.CallAvailableCommand
+                    assertEquals(AgentCommandId.TOOL_START_RANDOM_POSTS, toolRequest.commandId)
+                    assertEquals(7, toolRequest.arguments["intervalMinutes"])
+
+                    return AgentResponse.ToolCallSuccess(
+                        endpoint = "http://127.0.0.1:3001/mcp",
+                        result = McpToolCallResult(
+                            toolName = "start_random_posts",
+                            isError = false,
+                            content = listOf("Random posts push активирован для текущей сессии. Интервал: 7 мин."),
+                        ),
+                    )
+                }
+            },
+        )
+
+        val result = handler.handle(ToolStartRandomPostsCommand(intervalMinutes = 7))
+
+        assertIs<ToolCallResult>(result)
+        assertEquals(true, result.successful)
+        assertEquals("tool start-random-posts 7", result.commandText)
+    }
+
+    @Test
+    fun toolStartRandomPostsCommandUsesEmptyArgumentsWhenIntervalIsOmitted() = runBlocking {
+        val handler = DefaultWorkflowCommandHandler(
+            agent = object : Agent {
+                override suspend fun handle(request: AgentRequest): AgentResponse {
+                    val toolRequest = request as AgentRequest.CallAvailableCommand
+                    assertEquals(AgentCommandId.TOOL_START_RANDOM_POSTS, toolRequest.commandId)
+                    assertEquals(emptyMap(), toolRequest.arguments)
+
+                    return AgentResponse.ToolCallSuccess(
+                        endpoint = "http://127.0.0.1:3001/mcp",
+                        result = McpToolCallResult(
+                            toolName = "start_random_posts",
+                            isError = false,
+                            content = listOf("Random posts push активирован для текущей сессии. Интервал: 5 мин."),
+                        ),
+                    )
+                }
+            },
+        )
+
+        val result = handler.handle(ToolStartRandomPostsCommand(intervalMinutes = null))
+
+        assertIs<ToolCallResult>(result)
+        assertEquals(true, result.successful)
+        assertEquals("tool start-random-posts", result.commandText)
     }
 }
