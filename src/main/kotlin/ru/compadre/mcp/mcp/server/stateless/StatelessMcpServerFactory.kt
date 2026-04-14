@@ -115,7 +115,6 @@ internal fun createStatelessMcpServer(
     ) { request ->
         pickRandomPostsToolResult(
             arguments = request.arguments,
-            jsonPlaceholderApiClient = jsonPlaceholderApiClient,
         )
     }
 

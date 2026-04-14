@@ -10,8 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
-import ru.compadre.mcp.mcp.server.common.api.jsonplaceholder.JsonPlaceholderApiClient
-import ru.compadre.mcp.mcp.server.common.api.jsonplaceholder.common.models.JsonPlaceholderPost
+import ru.compadre.mcp.mcp.server.common.summarypipeline.models.SummaryPost
 
 class PickRandomPostsToolTest {
     @Test
@@ -20,17 +19,13 @@ class PickRandomPostsToolTest {
             arguments = buildJsonObject {
                 put("count", 3)
             },
-            jsonPlaceholderApiClient = object : JsonPlaceholderApiClient {
-                override suspend fun fetchPost(postId: Int): JsonPlaceholderPost? = null
-
-                override suspend fun fetchPosts(limit: Int): List<JsonPlaceholderPost> = (1..5).map { id ->
-                    JsonPlaceholderPost(
-                        userId = 1,
-                        id = id,
-                        title = "Post $id",
-                        body = "Body $id",
-                    )
-                }
+            catalog = (1..5).map { id ->
+                SummaryPost(
+                    userId = 1,
+                    id = id,
+                    title = "Post $id",
+                    body = "Body $id",
+                )
             },
             random = Random(42),
         )

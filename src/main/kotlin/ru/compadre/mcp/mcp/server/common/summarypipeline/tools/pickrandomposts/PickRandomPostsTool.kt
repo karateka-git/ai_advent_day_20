@@ -3,7 +3,6 @@ package ru.compadre.mcp.mcp.server.common.summarypipeline.tools.pickrandomposts
 import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import io.modelcontextprotocol.kotlin.sdk.types.ToolSchema
-import kotlin.math.max
 import kotlin.random.Random
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonObject
@@ -13,7 +12,6 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
-import ru.compadre.mcp.mcp.server.common.api.jsonplaceholder.JsonPlaceholderApiClient
 import ru.compadre.mcp.mcp.server.common.summarypipeline.models.PostSelection
 import ru.compadre.mcp.mcp.server.common.summarypipeline.models.SummaryPost
 import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.summaryPipelineJson
@@ -40,7 +38,7 @@ fun pickRandomPostsToolOutputSchema(): ToolSchema = ToolSchema(
 
 internal suspend fun pickRandomPostsToolResult(
     arguments: JsonObject?,
-    jsonPlaceholderApiClient: JsonPlaceholderApiClient,
+    catalog: List<SummaryPost> = defaultSummaryPostCatalog(),
     random: Random = Random.Default,
 ): CallToolResult {
     val count = arguments.requiredIntArgument("count")
@@ -56,18 +54,9 @@ internal suspend fun pickRandomPostsToolResult(
         )
     }
 
-    val sourcePosts = jsonPlaceholderApiClient.fetchPosts(limit = max(count, 100))
-    val selectedPosts = sourcePosts
+    val selectedPosts = catalog
         .shuffled(random)
         .take(count)
-        .map { post ->
-            SummaryPost(
-                userId = post.userId,
-                id = post.id,
-                title = post.title,
-                body = post.body,
-            )
-        }
     val selection = PostSelection(posts = selectedPosts)
 
     return CallToolResult(

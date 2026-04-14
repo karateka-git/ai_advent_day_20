@@ -61,24 +61,6 @@ function Assert-LauncherExists {
     }
 }
 
-function Ensure-Launchers {
-    param(
-        [Parameter(Mandatory = $true)][string]$ClientBatPath,
-        [Parameter(Mandatory = $true)][string]$ServerBatPath,
-        [Parameter(Mandatory = $true)][string]$StatefulServerBatPath
-    )
-
-    if ((Test-Path -LiteralPath $ClientBatPath) -and (Test-Path -LiteralPath $ServerBatPath) -and (Test-Path -LiteralPath $StatefulServerBatPath)) {
-        return
-    }
-
-    Write-Output "Direct launchers not found. Building install distributions..."
-    & .\gradlew.bat installClientDist installServerDist installStatefulServerDist
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to build direct launchers. Gradle exit code: $LASTEXITCODE."
-    }
-}
-
 function Assert-OutputContains {
     param(
         [Parameter(Mandatory = $true)][string]$Text,
@@ -125,20 +107,28 @@ function Stop-HeadlessLauncherProcess {
     }
 }
 
-function Invoke-Utf8ClientCommands {
+function Invoke-ClientCommand {
     param(
         [Parameter(Mandatory = $true)][string]$ProjectRoot,
+        [Parameter(Mandatory = $true)][string]$BatPath,
+        [Parameter(Mandatory = $true)][string[]]$CommandArgs,
         [Parameter(Mandatory = $true)][string]$StdoutPath,
         [Parameter(Mandatory = $true)][string]$StderrPath
     )
 
-    $null = & powershell -ExecutionPolicy Bypass -File (Join-Path $ProjectRoot "scripts\invoke-client-commands.ps1") `
-        -ProjectRoot $ProjectRoot `
-        -Commands @("help", "tool posts", "tool start-random-posts 1", "exit") `
-        -StdoutPath $StdoutPath `
-        -StderrPath $StderrPath
-
-    return $LASTEXITCODE
+    $quotedArgs = $CommandArgs | ForEach-Object { "`"$_`"" }
+    $command = "chcp 65001>nul && `"$BatPath`" $($quotedArgs -join ' ')"
+    $process = Start-Process `
+        -FilePath "cmd.exe" `
+        -ArgumentList "/c", $command `
+        -WorkingDirectory $ProjectRoot `
+        -RedirectStandardOutput $StdoutPath `
+        -RedirectStandardError $StderrPath `
+        -PassThru `
+        -Wait
+    $exitCode = $process.ExitCode
+    $process.Dispose()
+    return $exitCode
 }
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
@@ -153,23 +143,35 @@ $statefulEndpoint = "http://$serverHost`:$statefulServerPort/mcp"
 $tmpDir = Join-Path $projectRoot "build\tmp\e2e"
 New-Item -ItemType Directory -Force -Path $tmpDir | Out-Null
 
+$summaryStoragePath = Join-Path $projectRoot "build\tmp\mcp-summary-storage\saved-summaries.json"
+if (Test-Path -LiteralPath $summaryStoragePath) {
+    Remove-Item -LiteralPath $summaryStoragePath -Force
+}
+
 $serverStdout = Join-Path $tmpDir "server.out"
 $serverStderr = Join-Path $tmpDir "server.err"
 $statefulServerStdout = Join-Path $tmpDir "stateful-server.out"
 $statefulServerStderr = Join-Path $tmpDir "stateful-server.err"
-$clientStdout = Join-Path $tmpDir "client.out"
-$clientStderr = Join-Path $tmpDir "client.err"
+$summaryClientStdout = Join-Path $tmpDir "client-summary.out"
+$summaryClientStderr = Join-Path $tmpDir "client-summary.err"
+$listClientStdout = Join-Path $tmpDir "client-list.out"
+$listClientStderr = Join-Path $tmpDir "client-list.err"
 
 $clientBatPath = Get-ClientBatPath -ProjectRoot $projectRoot
 $serverBatPath = Get-ServerBatPath -ProjectRoot $projectRoot
 $statefulServerBatPath = Get-StatefulServerBatPath -ProjectRoot $projectRoot
 
-Ensure-Launchers -ClientBatPath $clientBatPath -ServerBatPath $serverBatPath -StatefulServerBatPath $statefulServerBatPath
+Write-Output "Building latest launcher distributions..."
+& .\gradlew.bat installClientDist installServerDist installStatefulServerDist
+if ($LASTEXITCODE -ne 0) {
+    throw "Failed to build direct launchers. Gradle exit code: $LASTEXITCODE."
+}
+
 Assert-LauncherExists -Path $clientBatPath -Description "Built client launcher"
 Assert-LauncherExists -Path $serverBatPath -Description "Built stateless server launcher"
 Assert-LauncherExists -Path $statefulServerBatPath -Description "Built stateful server launcher"
 
-@($serverStdout, $serverStderr, $statefulServerStdout, $statefulServerStderr, $clientStdout, $clientStderr) | ForEach-Object {
+@($serverStdout, $serverStderr, $statefulServerStdout, $statefulServerStderr, $summaryClientStdout, $summaryClientStderr, $listClientStdout, $listClientStderr) | ForEach-Object {
     if (Test-Path $_) {
         Remove-Item $_ -Force
     }
@@ -197,30 +199,58 @@ try {
     Wait-Port -TargetHost $serverHost -Port $statelessServerPort
     Wait-Port -TargetHost $serverHost -Port $statefulServerPort
 
-    $clientExitCode = Invoke-Utf8ClientCommands `
+    $clientExitCode = Invoke-ClientCommand `
         -ProjectRoot $projectRoot `
-        -StdoutPath $clientStdout `
-        -StderrPath $clientStderr
+        -BatPath $clientBatPath `
+        -CommandArgs @("tool", "summary", "posts", "10", "long") `
+        -StdoutPath $summaryClientStdout `
+        -StderrPath $summaryClientStderr
 
     if ($clientExitCode -ne 0) {
-        $clientError = if (Test-Path $clientStderr) { Get-Content $clientStderr -Raw } else { "" }
-        $clientOutput = if (Test-Path $clientStdout) { Get-Content $clientStdout -Raw } else { "" }
-        throw "Client process failed with exit code $clientExitCode.`n$clientOutput`n$clientError"
+        $clientError = if (Test-Path $summaryClientStderr) { Get-Content $summaryClientStderr -Raw } else { "" }
+        $clientOutput = if (Test-Path $summaryClientStdout) { Get-Content $summaryClientStdout -Raw } else { "" }
+        throw "Summary client process failed with exit code $clientExitCode.`n$clientOutput`n$clientError"
     }
 
-    $clientOutput = Get-Content $clientStdout -Raw
-    Assert-OutputContains -Text $clientOutput -ExpectedFragments @(
-        "tool posts",
-        "tool start-random-posts [intervalMinutes]"
+    $listExitCode = Invoke-ClientCommand `
+        -ProjectRoot $projectRoot `
+        -BatPath $clientBatPath `
+        -CommandArgs @("tool", "summaries") `
+        -StdoutPath $listClientStdout `
+        -StderrPath $listClientStderr
+
+    if ($listExitCode -ne 0) {
+        $clientError = if (Test-Path $listClientStderr) { Get-Content $listClientStderr -Raw } else { "" }
+        $clientOutput = if (Test-Path $listClientStdout) { Get-Content $listClientStdout -Raw } else { "" }
+        throw "List client process failed with exit code $listExitCode.`n$clientOutput`n$clientError"
+    }
+
+    $summaryOutput = Get-Content $summaryClientStdout -Raw
+    $listOutput = Get-Content $listClientStdout -Raw
+    Assert-OutputContains -Text $summaryOutput -ExpectedFragments @(
+        "Summary pipeline выполнен успешно.",
+        "Сохранён summary:",
+        "Выбраны публикации:"
     )
+    Assert-OutputContains -Text $listOutput -ExpectedFragments @(
+        "Сохранённые summary:",
+        "Summary по публикациям"
+    )
+
+    if (-not (Test-Path -LiteralPath $summaryStoragePath)) {
+        throw "Expected summary storage file was not created: $summaryStoragePath"
+    }
 
     Write-Output "E2E check passed."
     Write-Output ""
     Write-Output "Stateless endpoint: $statelessEndpoint"
     Write-Output "Stateful endpoint: $statefulEndpoint"
     Write-Output ""
-    Write-Output "Client output:"
-    Write-Output $clientOutput
+    Write-Output "Summary command output:"
+    Write-Output $summaryOutput
+    Write-Output ""
+    Write-Output "List command output:"
+    Write-Output $listOutput
 } finally {
     if ($serverProcess) {
         Stop-HeadlessLauncherProcess -Process $serverProcess
