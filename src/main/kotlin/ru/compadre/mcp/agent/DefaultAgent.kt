@@ -84,7 +84,7 @@ class DefaultAgent(
 
     private suspend fun handleRunSummaryPipeline(request: AgentRequest.RunSummaryPipeline): AgentResponse =
         runCatching {
-            val server = requirePreparedStatelessServer()
+            val server = requirePreparedSummaryPipelineServer()
             ensureSummaryPipelineToolsExist(server)
 
             val randomPostsResult = mcpClient.callTool(
@@ -206,10 +206,10 @@ class DefaultAgent(
             )
         }
 
-    private fun requirePreparedStatelessServer(): PreparedMcpServer =
+    private fun requirePreparedSummaryPipelineServer(): PreparedMcpServer =
         capabilityRegistry.snapshot().servers.firstOrNull {
-            it.serverId == McpServerId.LOCAL_MCP_SERVER && it.prepared
-        } ?: error("Summary pipeline недоступен: stateless MCP-сервер не подготовлен.")
+            it.serverId == McpServerId.LOCAL_STATEFUL_MCP_SERVER && it.prepared
+        } ?: error("Summary pipeline недоступен: stateful MCP-сервер не подготовлен.")
 
     private fun ensureSummaryPipelineToolsExist(server: PreparedMcpServer) {
         val toolNames = server.tools.map { it.name }.toSet()

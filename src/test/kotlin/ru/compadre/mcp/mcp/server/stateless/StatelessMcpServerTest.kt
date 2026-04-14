@@ -5,9 +5,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import ru.compadre.mcp.mcp.server.common.api.jsonplaceholder.JsonPlaceholderApiClient
 import ru.compadre.mcp.mcp.server.common.api.jsonplaceholder.common.models.JsonPlaceholderPost
-import ru.compadre.mcp.mcp.server.common.summarypipeline.models.SavedSummary
-import ru.compadre.mcp.mcp.server.common.summarypipeline.models.SummaryDraft
-import ru.compadre.mcp.mcp.server.common.summarypipeline.storage.SummaryStorage
 
 class StatelessMcpServerTest {
     @Test
@@ -18,13 +15,6 @@ class StatelessMcpServerTest {
 
                 override suspend fun fetchPosts(limit: Int): List<JsonPlaceholderPost> = emptyList()
             },
-            summaryStorage = object : SummaryStorage {
-                override fun save(draft: SummaryDraft): SavedSummary = error("not used")
-
-                override fun list(): List<SavedSummary> = emptyList()
-
-                override fun get(summaryId: String): SavedSummary? = null
-            },
         )
 
         assertEquals(
@@ -33,11 +23,6 @@ class StatelessMcpServerTest {
                 "echo",
                 "fetch_post",
                 "list_posts",
-                "pick_random_posts",
-                "merge_posts",
-                "save_summary",
-                "list_saved_summaries",
-                "get_saved_summary",
             ),
             server.tools.keys,
         )
@@ -45,10 +30,5 @@ class StatelessMcpServerTest {
         assertTrue(server.tools["echo"] != null)
         assertTrue(server.tools["fetch_post"] != null)
         assertTrue(server.tools["list_posts"] != null)
-        assertTrue(server.tools["pick_random_posts"] != null)
-        assertTrue(server.tools["merge_posts"] != null)
-        assertTrue(server.tools["save_summary"] != null)
-        assertTrue(server.tools["list_saved_summaries"] != null)
-        assertTrue(server.tools["get_saved_summary"] != null)
     }
 }

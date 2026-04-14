@@ -10,5 +10,5 @@ internal class ToolSummaryPostsAgentCommandDefinition : RequiredToolsAgentComman
     description = "Собрать summary по случайным публикациям и сохранить его в локальное хранилище.",
     requiredToolNames = setOf("pick_random_posts", "merge_posts", "save_summary"),
     representativeToolName = "pick_random_posts",
-    routing = CommandRouting.FixedServer(McpServerId.LOCAL_MCP_SERVER),
+    routing = CommandRouting.FixedServer(McpServerId.LOCAL_STATEFUL_MCP_SERVER),
 )

@@ -250,7 +250,7 @@ class DefaultWorkflowCommandHandlerTest {
                     assertEquals("short", pipelineRequest.strategy)
 
                     return AgentResponse.ToolCallSuccess(
-                        endpoint = "http://127.0.0.1:3000/mcp",
+                        endpoint = "http://127.0.0.1:3001/mcp",
                         result = McpToolCallResult(
                             toolName = "summary_pipeline",
                             isError = false,
@@ -279,7 +279,7 @@ class DefaultWorkflowCommandHandlerTest {
                     assertEquals("summary-2", toolRequest.arguments["summaryId"])
 
                     return AgentResponse.ToolCallSuccess(
-                        endpoint = "http://127.0.0.1:3000/mcp",
+                        endpoint = "http://127.0.0.1:3001/mcp",
                         result = McpToolCallResult(
                             toolName = "get_saved_summary",
                             isError = false,
@@ -306,7 +306,7 @@ class DefaultWorkflowCommandHandlerTest {
                     assertEquals(AgentCommandId.TOOL_SUMMARIES, toolRequest.commandId)
 
                     return AgentResponse.ToolCallSuccess(
-                        endpoint = "http://127.0.0.1:3000/mcp",
+                        endpoint = "http://127.0.0.1:3001/mcp",
                         result = McpToolCallResult(
                             toolName = "list_saved_summaries",
                             isError = false,

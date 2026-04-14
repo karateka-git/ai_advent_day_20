@@ -21,6 +21,7 @@ import kotlinx.serialization.json.put
 import java.net.ServerSocket
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import ru.compadre.mcp.config.McpProjectConfig
 import ru.compadre.mcp.mcp.client.common.notifications.RANDOM_POST_NOTIFICATION_METHOD
@@ -67,7 +68,17 @@ class StatefulMcpClientTest {
             assertEquals(1, sessionRegistry.size())
 
             val tools = client.listTools().map { it.name }.toSet()
-            assertEquals(setOf("start_random_posts"), tools)
+            assertEquals(
+                setOf(
+                    "start_random_posts",
+                    "pick_random_posts",
+                    "merge_posts",
+                    "save_summary",
+                    "list_saved_summaries",
+                    "get_saved_summary",
+                ),
+                tools,
+            )
 
             val startResult = client.callTool(
                 McpToolCallRequest(
@@ -208,5 +219,24 @@ class StatefulMcpClientTest {
             client.close()
             engine.stop(1000, 1000)
         }
+    }
+
+    @Test
+    fun toToolCallResultKeepsStructuredContent() {
+        val client = StatefulMcpClient()
+
+        val result = client.toToolCallResult(
+            toolName = "save_summary",
+            result = CallToolResult(
+                content = listOf(TextContent("saved")),
+                isError = false,
+                structuredContent = buildJsonObject {
+                    put("displayId", "summary-1")
+                },
+            ),
+        )
+
+        assertNotNull(result.structuredContent)
+        assertEquals("\"summary-1\"", result.structuredContent?.get("displayId").toString())
     }
 }

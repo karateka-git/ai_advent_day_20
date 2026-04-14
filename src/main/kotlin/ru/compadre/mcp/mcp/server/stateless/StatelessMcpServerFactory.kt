@@ -15,23 +15,6 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
 import ru.compadre.mcp.mcp.server.common.api.jsonplaceholder.DefaultJsonPlaceholderApiClient
 import ru.compadre.mcp.mcp.server.common.api.jsonplaceholder.JsonPlaceholderApiClient
-import ru.compadre.mcp.mcp.server.common.summarypipeline.storage.FileSummaryStorage
-import ru.compadre.mcp.mcp.server.common.summarypipeline.storage.SummaryStorage
-import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.getsavedsummary.getSavedSummaryToolOutputSchema
-import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.getsavedsummary.getSavedSummaryToolResult
-import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.getsavedsummary.getSavedSummaryToolSchema
-import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.listsavedsummaries.listSavedSummariesToolOutputSchema
-import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.listsavedsummaries.listSavedSummariesToolResult
-import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.listsavedsummaries.listSavedSummariesToolSchema
-import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.mergeposts.mergePostsToolOutputSchema
-import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.mergeposts.mergePostsToolResult
-import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.mergeposts.mergePostsToolSchema
-import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.pickrandomposts.pickRandomPostsToolOutputSchema
-import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.pickrandomposts.pickRandomPostsToolResult
-import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.pickrandomposts.pickRandomPostsToolSchema
-import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.savesummary.saveSummaryToolOutputSchema
-import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.savesummary.saveSummaryToolResult
-import ru.compadre.mcp.mcp.server.common.summarypipeline.tools.savesummary.saveSummaryToolSchema
 import ru.compadre.mcp.mcp.server.common.toolcall.tools.fetchpost.fetchPostToolResult
 import ru.compadre.mcp.mcp.server.common.toolcall.tools.fetchpost.fetchPostToolSchema
 import ru.compadre.mcp.mcp.server.common.toolcall.tools.listposts.listPostsToolResult
@@ -39,7 +22,6 @@ import ru.compadre.mcp.mcp.server.common.toolcall.tools.listposts.listPostsToolS
 
 internal fun createStatelessMcpServer(
     jsonPlaceholderApiClient: JsonPlaceholderApiClient = DefaultJsonPlaceholderApiClient(),
-    summaryStorage: SummaryStorage = FileSummaryStorage(),
 ): Server = Server(
     serverInfo = Implementation(
         name = "local_mcp_server",
@@ -103,68 +85,6 @@ internal fun createStatelessMcpServer(
     ) {
         listPostsToolResult(
             jsonPlaceholderApiClient = jsonPlaceholderApiClient,
-        )
-    }
-
-    addTool(
-        name = "pick_random_posts",
-        title = "Pick Random Posts",
-        description = "Получает заданное количество случайных публикаций из локального каталога.",
-        inputSchema = pickRandomPostsToolSchema(),
-        outputSchema = pickRandomPostsToolOutputSchema(),
-    ) { request ->
-        pickRandomPostsToolResult(
-            arguments = request.arguments,
-        )
-    }
-
-    addTool(
-        name = "merge_posts",
-        title = "Merge Posts",
-        description = "Объединяет выбранные публикации в один summary.",
-        inputSchema = mergePostsToolSchema(),
-        outputSchema = mergePostsToolOutputSchema(),
-    ) { request ->
-        mergePostsToolResult(
-            arguments = request.arguments,
-        )
-    }
-
-    addTool(
-        name = "save_summary",
-        title = "Save Summary",
-        description = "Сохраняет summary в локальное хранилище.",
-        inputSchema = saveSummaryToolSchema(),
-        outputSchema = saveSummaryToolOutputSchema(),
-    ) { request ->
-        saveSummaryToolResult(
-            arguments = request.arguments,
-            summaryStorage = summaryStorage,
-        )
-    }
-
-    addTool(
-        name = "list_saved_summaries",
-        title = "List Saved Summaries",
-        description = "Возвращает все summary, сохранённые в локальном хранилище.",
-        inputSchema = listSavedSummariesToolSchema(),
-        outputSchema = listSavedSummariesToolOutputSchema(),
-    ) {
-        listSavedSummariesToolResult(
-            summaryStorage = summaryStorage,
-        )
-    }
-
-    addTool(
-        name = "get_saved_summary",
-        title = "Get Saved Summary",
-        description = "Возвращает одну summary из локального хранилища по идентификатору.",
-        inputSchema = getSavedSummaryToolSchema(),
-        outputSchema = getSavedSummaryToolOutputSchema(),
-    ) { request ->
-        getSavedSummaryToolResult(
-            arguments = request.arguments,
-            summaryStorage = summaryStorage,
         )
     }
 }

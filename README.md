@@ -39,8 +39,8 @@
 
 Ключевая идея:
 
-- `tool posts`, `tool post <postId>`, `tool summary posts <count> [strategy]` и `tool summaries` идут в `stateless` сервер;
-- `tool start-random-posts [intervalMinutes]` идёт в `stateful` сервер;
+- `tool posts` и `tool post <postId>` идут в `stateless` сервер;
+- `tool start-random-posts [intervalMinutes]`, `tool summary posts <count> [strategy]`, `tool summaries` и `tool summary saved <summaryId>` идут в `stateful` сервер;
 - CLI, workflow и agent при этом остаются общими.
 
 ## Summary Pipeline
@@ -87,6 +87,8 @@ Pipeline выполняется автоматически:
   По умолчанию стратегия — `long`.
 - `tool summaries`
   Показать все summary, сохранённые в локальном хранилище.
+- `tool summary saved <summaryId>`
+  Показать одну сохранённую summary по короткому идентификатору вроде `summary-1`.
 - `tool start-random-posts [intervalMinutes]`
   Включить push случайных публикаций в текущую клиентскую сессию.
 - `help`
@@ -104,8 +106,8 @@ Pipeline выполняется автоматически:
    Запускает workflow-сценарий pipeline.
 3. [DefaultAgent.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_19/src/main/kotlin/ru/compadre/mcp/agent/DefaultAgent.kt)
    Оркестрирует вызовы MCP-tools и сам выбирает 3 публикации.
-4. [StatelessMcpServerFactory.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_19/src/main/kotlin/ru/compadre/mcp/mcp/server/stateless/StatelessMcpServerFactory.kt)
-   Регистрирует `pick_random_posts`, `merge_posts`, `save_summary`, `list_saved_summaries`.
+4. [StatefulMcpServerFactory.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_19/src/main/kotlin/ru/compadre/mcp/mcp/server/stateful/StatefulMcpServerFactory.kt)
+   Регистрирует `start_random_posts`, `pick_random_posts`, `merge_posts`, `save_summary`, `list_saved_summaries`, `get_saved_summary`.
 5. [SummaryStorage.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_19/src/main/kotlin/ru/compadre/mcp/mcp/server/common/summarypipeline/storage/SummaryStorage.kt)
    Сохраняет summary в локальный JSON-файл.
 
@@ -189,5 +191,5 @@ powershell -ExecutionPolicy Bypass -File .\scripts\check-e2e.ps1
 
 - summary-pipeline использует локальный mock-каталог, а не внешний API;
 - отдельной команды удаления summary пока нет;
-- `stateful` контур по-прежнему используется только для `start_random_posts`;
+- `stateful` контур теперь совмещает push-сценарий `start_random_posts` и summary pipeline;
 - push-сценарий останавливается при завершении клиентской сессии.

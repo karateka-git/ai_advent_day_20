@@ -288,3 +288,31 @@
 Следующий шаг:
 
 - реализация завершена, проект готов к демонстрации и дальнейшему развитию.
+
+## Update 2026-04-14. Stateful Migration
+
+Статус: завершён
+
+Что изменено:
+
+1. Summary-tools перенесены из `stateless` контура в `stateful`.
+2. `StatefulMcpServerFactory` теперь публикует:
+   - `start_random_posts`
+   - `pick_random_posts`
+   - `merge_posts`
+   - `save_summary`
+   - `list_saved_summaries`
+   - `get_saved_summary`
+3. `StatelessMcpServerFactory` снова оставлен только для базовых reference-tools:
+   - `ping`
+   - `echo`
+   - `fetch_post`
+   - `list_posts`
+4. Agent routing для `tool summary posts`, `tool summaries` и `tool summary saved` переведён на `LOCAL_STATEFUL_MCP_SERVER`.
+5. `StatefulMcpClient` начал сохранять `structuredContent`, чтобы pipeline мог продолжаться после `pick_random_posts`.
+6. E2E-скрипт обновлён под новую схему и более устойчивые проверки вывода.
+
+Проверка:
+
+- `.\gradlew.bat test`
+- `powershell -ExecutionPolicy Bypass -File .\scripts\check-e2e.ps1`

@@ -315,15 +315,15 @@ class DefaultAgentTest {
     @Test
     fun runSummaryPipelineSelectsThreePostsAndSavesSummary() = runBlocking {
         val registry = AgentCapabilityRegistry()
-        val endpoint = "http://127.0.0.1:3000/mcp"
+        val endpoint = "http://127.0.0.1:3001/mcp"
         val agent = DefaultAgent(
             mcpClient = object : McpClient {
                 override suspend fun connect(endpoint: String): McpConnectionSnapshot = McpConnectionSnapshot(
                     endpoint = endpoint,
                     serverInfo = McpServerInfo(
-                        name = "local_mcp_server",
+                        name = "local_stateful_mcp_server",
                         version = "0.1.0",
-                        title = "Local MCP Server",
+                        title = "Local Stateful MCP Server",
                     ),
                     tools = listOf(
                         McpToolDescriptor(name = "pick_random_posts", title = "Pick Random Posts"),
@@ -426,7 +426,7 @@ class DefaultAgentTest {
             AgentRequest.Prepare(
                 servers = listOf(
                     KnownMcpServer(
-                        serverId = McpServerId.LOCAL_MCP_SERVER,
+                        serverId = McpServerId.LOCAL_STATEFUL_MCP_SERVER,
                         endpoint = endpoint,
                     ),
                 ),

@@ -23,11 +23,6 @@ class AvailableAgentCommandResolverTest {
                     tools = listOf(
                         McpToolDescriptor(name = "list_posts", title = "List Posts"),
                         McpToolDescriptor(name = "fetch_post", title = "Fetch Post"),
-                        McpToolDescriptor(name = "pick_random_posts", title = "Pick Random Posts"),
-                        McpToolDescriptor(name = "merge_posts", title = "Merge Posts"),
-                        McpToolDescriptor(name = "save_summary", title = "Save Summary"),
-                        McpToolDescriptor(name = "list_saved_summaries", title = "List Saved Summaries"),
-                        McpToolDescriptor(name = "get_saved_summary", title = "Get Saved Summary"),
                     ),
                 ),
                 PreparedMcpServer(
@@ -36,6 +31,11 @@ class AvailableAgentCommandResolverTest {
                     prepared = true,
                     tools = listOf(
                         McpToolDescriptor(name = "start_random_posts", title = "Start Random Posts"),
+                        McpToolDescriptor(name = "pick_random_posts", title = "Pick Random Posts"),
+                        McpToolDescriptor(name = "merge_posts", title = "Merge Posts"),
+                        McpToolDescriptor(name = "save_summary", title = "Save Summary"),
+                        McpToolDescriptor(name = "list_saved_summaries", title = "List Saved Summaries"),
+                        McpToolDescriptor(name = "get_saved_summary", title = "Get Saved Summary"),
                     ),
                 ),
             ),

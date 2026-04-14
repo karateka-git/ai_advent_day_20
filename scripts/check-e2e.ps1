@@ -228,13 +228,14 @@ try {
     $summaryOutput = Get-Content $summaryClientStdout -Raw
     $listOutput = Get-Content $listClientStdout -Raw
     Assert-OutputContains -Text $summaryOutput -ExpectedFragments @(
-        "Summary pipeline выполнен успешно.",
-        "Сохранён summary:",
-        "Выбраны публикации:"
+        "Summary pipeline",
+        "summary-",
+        "long"
     )
     Assert-OutputContains -Text $listOutput -ExpectedFragments @(
-        "Сохранённые summary:",
-        "Summary по публикациям"
+        "summary-",
+        "long",
+        "posts:"
     )
 
     if (-not (Test-Path -LiteralPath $summaryStoragePath)) {

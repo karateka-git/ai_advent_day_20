@@ -166,6 +166,7 @@ class StatefulMcpClient : McpClient {
                 else -> content.toString()
             }
         },
+        structuredContent = result.structuredContent,
     )
 
     @Suppress("UNCHECKED_CAST")

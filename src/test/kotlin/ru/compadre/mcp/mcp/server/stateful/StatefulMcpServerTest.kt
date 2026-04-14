@@ -17,7 +17,22 @@ class StatefulMcpServerTest {
             },
         )
 
-        assertEquals(setOf("start_random_posts"), server.tools.keys)
+        assertEquals(
+            setOf(
+                "start_random_posts",
+                "pick_random_posts",
+                "merge_posts",
+                "save_summary",
+                "list_saved_summaries",
+                "get_saved_summary",
+            ),
+            server.tools.keys,
+        )
         assertTrue(server.tools["start_random_posts"] != null)
+        assertTrue(server.tools["pick_random_posts"] != null)
+        assertTrue(server.tools["merge_posts"] != null)
+        assertTrue(server.tools["save_summary"] != null)
+        assertTrue(server.tools["list_saved_summaries"] != null)
+        assertTrue(server.tools["get_saved_summary"] != null)
     }
 }

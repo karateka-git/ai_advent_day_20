@@ -9,5 +9,5 @@ internal class ToolSummarySavedAgentCommandDefinition : ToolBasedAgentCommandDef
     cliPattern = "tool summary saved <summaryId>",
     description = "Показать одну сохранённую summary по идентификатору.",
     toolName = "get_saved_summary",
-    routing = CommandRouting.FixedServer(McpServerId.LOCAL_MCP_SERVER),
+    routing = CommandRouting.FixedServer(McpServerId.LOCAL_STATEFUL_MCP_SERVER),
 )

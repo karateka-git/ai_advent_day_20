@@ -193,7 +193,7 @@
 
 ## Функциональные требования
 
-- На `stateless` MCP server должны появиться новые инструменты:
+- На `stateful` MCP server должны появиться новые инструменты:
   - `pick_random_posts`
   - `merge_posts`
   - `save_summary`
@@ -301,7 +301,7 @@
 
 Результат этапа:
 
-- `stateless` server публикует `pick_random_posts`, `merge_posts`, `save_summary`, `list_saved_summaries`;
+- `stateful` server публикует `start_random_posts`, `pick_random_posts`, `merge_posts`, `save_summary`, `list_saved_summaries`, `get_saved_summary`;
 - локальное хранилище работает;
 - server-side тесты покрывают базовый сценарий.
 
@@ -310,7 +310,7 @@
 1. Добавить serializable-модели pipeline и хранилища.
 2. Реализовать файловый repository для summary.
 3. Реализовать server-side обработчики новых инструментов.
-4. Зарегистрировать инструменты в `StatelessMcpServerFactory`.
+4. Зарегистрировать инструменты в `StatefulMcpServerFactory`.
 5. Добавить unit/server tests.
 
 ### Этап 3. Agent-Level Pipeline
