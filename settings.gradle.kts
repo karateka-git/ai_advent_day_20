@@ -1,1 +1,2 @@
-rootProject.name = "ai_advent_day_18"
+﻿rootProject.name = "ai_advent_day_19"
+
