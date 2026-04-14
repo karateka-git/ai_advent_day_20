@@ -153,3 +153,57 @@
 Следующий шаг:
 
 - перейти к `Этапу 4` и сделать pipeline доступным из CLI вместе с командой чтения хранилища.
+
+## Этап 4. CLI-Интеграция
+
+Статус: завершён
+
+Цель этапа:
+
+- сделать summary pipeline доступным из CLI;
+- добавить команду просмотра сохранённых summary;
+- включить новые сценарии в capability-based help.
+
+Выполненные действия:
+
+1. Добавлены новые user-facing команды:
+   - `ToolSummaryPostsCommand`
+   - `ToolSummariesCommand`
+2. Расширен `DefaultCliCommandParser`:
+   - `tool summary posts <count> [strategy]`
+   - `tool summaries`
+3. Добавлены новые `AgentCommandId`:
+   - `TOOL_SUMMARY_POSTS`
+   - `TOOL_SUMMARIES`
+4. Добавлены новые command definitions:
+   - `ToolSummaryPostsAgentCommandDefinition`
+   - `ToolSummariesAgentCommandDefinition`
+5. Для pipeline-команды добавлена отдельная definition с проверкой наличия всех требуемых MCP-tools.
+6. `supportedAgentCommandDefinitions()` обновлён, поэтому после подготовки агента новые команды попадают в доступный help.
+7. `DefaultWorkflowCommandHandler` расширен обработкой `tool summaries`.
+8. Добавлены тесты на:
+   - новый CLI parser;
+   - capability resolver;
+   - workflow-сценарий `tool summaries`;
+   - архитектурные контракты новых команд.
+9. Выполнен прогон `.\gradlew.bat test`.
+
+Принятые решения:
+
+- пользовательский pipeline запускается через отдельную workflow-команду, а не через `CallAvailableCommand`;
+- при этом команда всё равно появляется в help, потому что её availability проверяется через custom command definition;
+- команда `tool summaries` остаётся обычным single-tool сценарием через capability registry.
+
+Проверка:
+
+- parser принимает обе новые команды;
+- capability-based help теперь может показывать pipeline и список сохранённых summary;
+- `.\gradlew.bat test` завершается успешно.
+
+Коммиты этапа:
+
+- текущий коммит этапа — CLI-интеграция summary pipeline и команды чтения хранилища.
+
+Следующий шаг:
+
+- перейти к `Этапу 5` и обновить e2e-проверку под новый автоматический pipeline.

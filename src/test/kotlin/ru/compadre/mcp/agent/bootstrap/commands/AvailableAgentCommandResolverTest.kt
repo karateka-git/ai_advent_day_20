@@ -23,6 +23,10 @@ class AvailableAgentCommandResolverTest {
                     tools = listOf(
                         McpToolDescriptor(name = "list_posts", title = "List Posts"),
                         McpToolDescriptor(name = "fetch_post", title = "Fetch Post"),
+                        McpToolDescriptor(name = "pick_random_posts", title = "Pick Random Posts"),
+                        McpToolDescriptor(name = "merge_posts", title = "Merge Posts"),
+                        McpToolDescriptor(name = "save_summary", title = "Save Summary"),
+                        McpToolDescriptor(name = "list_saved_summaries", title = "List Saved Summaries"),
                     ),
                 ),
                 PreparedMcpServer(
@@ -36,9 +40,10 @@ class AvailableAgentCommandResolverTest {
             ),
         )
 
-        assertEquals(3, result.size)
+        assertEquals(5, result.size)
         assertEquals(AgentCommandId.TOOL_POSTS, result.first().commandId)
-        assertEquals("tool start-random-posts [intervalMinutes]", result.last().cliPattern)
+        assertEquals(true, result.any { it.commandId == AgentCommandId.TOOL_SUMMARY_POSTS })
+        assertEquals("tool summaries", result.last().cliPattern)
     }
 
     @Test

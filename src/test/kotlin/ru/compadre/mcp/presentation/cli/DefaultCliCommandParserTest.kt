@@ -7,6 +7,8 @@ import kotlin.test.assertIs
 import ru.compadre.mcp.workflow.command.ToolPostCommand
 import ru.compadre.mcp.workflow.command.ToolPostsCommand
 import ru.compadre.mcp.workflow.command.ToolStartRandomPostsCommand
+import ru.compadre.mcp.workflow.command.ToolSummariesCommand
+import ru.compadre.mcp.workflow.command.ToolSummaryPostsCommand
 
 class DefaultCliCommandParserTest {
     @Test
@@ -91,5 +93,45 @@ class DefaultCliCommandParserTest {
         assertFailsWith<IllegalArgumentException> {
             parser.parse(arrayOf("tool", "start-random-posts", "0"))
         }
+    }
+
+    @Test
+    fun parseAcceptsToolSummaryPostsWithDefaultStrategy() {
+        val parser = DefaultCliCommandParser()
+
+        val command = parser.parse(arrayOf("tool", "summary", "posts", "10"))
+
+        assertIs<ToolSummaryPostsCommand>(command)
+        assertEquals(10, command.count)
+        assertEquals("long", command.strategy)
+    }
+
+    @Test
+    fun parseAcceptsToolSummaryPostsWithExplicitStrategy() {
+        val parser = DefaultCliCommandParser()
+
+        val command = parser.parse(arrayOf("tool", "summary", "posts", "10", "short"))
+
+        assertIs<ToolSummaryPostsCommand>(command)
+        assertEquals(10, command.count)
+        assertEquals("short", command.strategy)
+    }
+
+    @Test
+    fun parseRejectsToolSummaryPostsWithUnknownStrategy() {
+        val parser = DefaultCliCommandParser()
+
+        assertFailsWith<IllegalArgumentException> {
+            parser.parse(arrayOf("tool", "summary", "posts", "10", "medium"))
+        }
+    }
+
+    @Test
+    fun parseAcceptsToolSummariesCommand() {
+        val parser = DefaultCliCommandParser()
+
+        val command = parser.parse(arrayOf("tool", "summaries"))
+
+        assertEquals(ToolSummariesCommand, command)
     }
 }

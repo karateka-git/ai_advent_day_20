@@ -16,6 +16,7 @@ import ru.compadre.mcp.workflow.command.PrepareAgentCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand
 import ru.compadre.mcp.workflow.command.ToolPostsCommand
 import ru.compadre.mcp.workflow.command.ToolStartRandomPostsCommand
+import ru.compadre.mcp.workflow.command.ToolSummariesCommand
 import ru.compadre.mcp.workflow.command.ToolSummaryPostsCommand
 import ru.compadre.mcp.workflow.result.AgentPreparationResult
 import ru.compadre.mcp.workflow.result.ToolCallResult
@@ -265,5 +266,32 @@ class DefaultWorkflowCommandHandlerTest {
         assertEquals(true, result.successful)
         assertEquals("tool summary posts 10 short", result.commandText)
         assertEquals(true, result.content.any { it.contains("summary-1") })
+    }
+
+    @Test
+    fun toolSummariesCommandUsesAvailableCommandRouting() = runBlocking {
+        val handler = DefaultWorkflowCommandHandler(
+            agent = object : Agent {
+                override suspend fun handle(request: AgentRequest): AgentResponse {
+                    val toolRequest = request as AgentRequest.CallAvailableCommand
+                    assertEquals(AgentCommandId.TOOL_SUMMARIES, toolRequest.commandId)
+
+                    return AgentResponse.ToolCallSuccess(
+                        endpoint = "http://127.0.0.1:3000/mcp",
+                        result = McpToolCallResult(
+                            toolName = "list_saved_summaries",
+                            isError = false,
+                            content = listOf("Сохранённые summary: 1", "1. Summary [summary-1]"),
+                        ),
+                    )
+                }
+            },
+        )
+
+        val result = handler.handle(ToolSummariesCommand)
+
+        assertIs<ToolCallResult>(result)
+        assertEquals(true, result.successful)
+        assertEquals("tool summaries", result.commandText)
     }
 }

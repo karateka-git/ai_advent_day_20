@@ -7,4 +7,6 @@ fun supportedAgentCommandDefinitions(): List<AgentCommandDefinition> = listOf(
     ToolPostsAgentCommandDefinition(),
     ToolPostAgentCommandDefinition(),
     ToolStartRandomPostsAgentCommandDefinition(),
+    ToolSummaryPostsAgentCommandDefinition(),
+    ToolSummariesAgentCommandDefinition(),
 )

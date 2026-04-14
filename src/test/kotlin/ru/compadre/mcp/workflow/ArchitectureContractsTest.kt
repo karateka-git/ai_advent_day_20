@@ -19,6 +19,7 @@ import ru.compadre.mcp.workflow.command.PrepareAgentCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand
 import ru.compadre.mcp.workflow.command.ToolPostsCommand
 import ru.compadre.mcp.workflow.command.ToolStartRandomPostsCommand
+import ru.compadre.mcp.workflow.command.ToolSummariesCommand
 import ru.compadre.mcp.workflow.command.ToolSummaryPostsCommand
 import ru.compadre.mcp.workflow.result.AgentPreparationResult
 import ru.compadre.mcp.workflow.result.AvailableCliCommandResult
@@ -80,6 +81,13 @@ class ArchitectureContractsTest {
         assertIs<ToolSummaryPostsCommand>(command)
         assertEquals(10, command.count)
         assertEquals("long", command.strategy)
+    }
+
+    @Test
+    fun toolSummariesCommandImplementsBaseCommandContract() {
+        val command: Command = ToolSummariesCommand
+
+        assertEquals(ToolSummariesCommand, command)
     }
 
     @Test

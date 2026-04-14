@@ -11,6 +11,7 @@ import ru.compadre.mcp.workflow.command.PrepareAgentCommand
 import ru.compadre.mcp.workflow.command.ToolPostCommand
 import ru.compadre.mcp.workflow.command.ToolPostsCommand
 import ru.compadre.mcp.workflow.command.ToolStartRandomPostsCommand
+import ru.compadre.mcp.workflow.command.ToolSummariesCommand
 import ru.compadre.mcp.workflow.command.ToolSummaryPostsCommand
 import ru.compadre.mcp.workflow.result.AgentPreparationResult
 import ru.compadre.mcp.workflow.result.AvailableCliCommandResult
@@ -28,6 +29,7 @@ class DefaultWorkflowCommandHandler(
         is ToolPostCommand -> handleToolPost(command)
         ToolPostsCommand -> handleToolPosts()
         is ToolStartRandomPostsCommand -> handleToolStartRandomPosts(command)
+        ToolSummariesCommand -> handleToolSummaries()
         is ToolSummaryPostsCommand -> handleToolSummaryPosts(command)
     }
 
@@ -124,6 +126,12 @@ class DefaultWorkflowCommandHandler(
                 errorMessage = "Агент вернул результат подготовки вместо pipeline-результата.",
             )
         }
+
+    private suspend fun handleToolSummaries(): ToolCallResult =
+        handleAvailableCommand(
+            commandText = "tool summaries",
+            commandId = AgentCommandId.TOOL_SUMMARIES,
+        )
 
     private suspend fun handleAvailableCommand(
         commandText: String,
