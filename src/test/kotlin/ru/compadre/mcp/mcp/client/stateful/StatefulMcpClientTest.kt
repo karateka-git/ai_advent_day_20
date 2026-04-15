@@ -155,6 +155,7 @@ class StatefulMcpClientTest {
                     client.randomPostNotifications().first()
                 }
             }
+            delay(100)
 
             client.callTool(
                 McpToolCallRequest(
@@ -204,6 +205,7 @@ class StatefulMcpClientTest {
                     client.randomPostNotifications().first()
                 }
             }
+            delay(100)
 
             client.callTool(
                 McpToolCallRequest(

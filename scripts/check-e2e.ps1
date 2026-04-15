@@ -156,6 +156,8 @@ $summaryClientStdout = Join-Path $tmpDir "client-summary.out"
 $summaryClientStderr = Join-Path $tmpDir "client-summary.err"
 $listClientStdout = Join-Path $tmpDir "client-list.out"
 $listClientStderr = Join-Path $tmpDir "client-list.err"
+$savedClientStdout = Join-Path $tmpDir "client-saved.out"
+$savedClientStderr = Join-Path $tmpDir "client-saved.err"
 
 $clientBatPath = Get-ClientBatPath -ProjectRoot $projectRoot
 $serverBatPath = Get-ServerBatPath -ProjectRoot $projectRoot
@@ -171,7 +173,7 @@ Assert-LauncherExists -Path $clientBatPath -Description "Built client launcher"
 Assert-LauncherExists -Path $serverBatPath -Description "Built stateless server launcher"
 Assert-LauncherExists -Path $statefulServerBatPath -Description "Built stateful server launcher"
 
-@($serverStdout, $serverStderr, $statefulServerStdout, $statefulServerStderr, $summaryClientStdout, $summaryClientStderr, $listClientStdout, $listClientStderr) | ForEach-Object {
+@($serverStdout, $serverStderr, $statefulServerStdout, $statefulServerStderr, $summaryClientStdout, $summaryClientStderr, $listClientStdout, $listClientStderr, $savedClientStdout, $savedClientStderr) | ForEach-Object {
     if (Test-Path $_) {
         Remove-Item $_ -Force
     }
@@ -227,6 +229,25 @@ try {
 
     $summaryOutput = Get-Content $summaryClientStdout -Raw
     $listOutput = Get-Content $listClientStdout -Raw
+    $savedSummaryId = [regex]::Match($summaryOutput, 'summary-\d+').Value
+    if ([string]::IsNullOrWhiteSpace($savedSummaryId)) {
+        throw "Could not extract saved summary id from summary command output."
+    }
+
+    $savedExitCode = Invoke-ClientCommand `
+        -ProjectRoot $projectRoot `
+        -BatPath $clientBatPath `
+        -CommandArgs @("tool", "summary", "saved", $savedSummaryId) `
+        -StdoutPath $savedClientStdout `
+        -StderrPath $savedClientStderr
+
+    if ($savedExitCode -ne 0) {
+        $clientError = if (Test-Path $savedClientStderr) { Get-Content $savedClientStderr -Raw } else { "" }
+        $clientOutput = if (Test-Path $savedClientStdout) { Get-Content $savedClientStdout -Raw } else { "" }
+        throw "Saved-summary client process failed with exit code $savedExitCode.`n$clientOutput`n$clientError"
+    }
+
+    $savedOutput = Get-Content $savedClientStdout -Raw
     Assert-OutputContains -Text $summaryOutput -ExpectedFragments @(
         "Summary pipeline",
         "summary-",
@@ -236,6 +257,11 @@ try {
         "summary-",
         "long",
         "posts:"
+    )
+    Assert-OutputContains -Text $savedOutput -ExpectedFragments @(
+        $savedSummaryId,
+        "Стратегия:",
+        "Исходные публикации:"
     )
 
     if (-not (Test-Path -LiteralPath $summaryStoragePath)) {
@@ -252,6 +278,9 @@ try {
     Write-Output ""
     Write-Output "List command output:"
     Write-Output $listOutput
+    Write-Output ""
+    Write-Output "Saved summary output:"
+    Write-Output $savedOutput
 } finally {
     if ($serverProcess) {
         Stop-HeadlessLauncherProcess -Process $serverProcess
