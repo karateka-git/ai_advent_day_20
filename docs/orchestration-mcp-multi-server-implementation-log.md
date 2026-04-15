@@ -104,7 +104,7 @@
 
 ## Этап 3. Реализация cross-server orchestration в agent/workflow
 
-Статус: в работе
+Статус: завершён
 
 Цель этапа:
 
@@ -137,8 +137,49 @@
 
 Коммиты этапа:
 
-- текущий коммит шага — cross-server orchestration в `DefaultAgent`.
+- `ac74c3b` — cross-server orchestration в `DefaultAgent`.
 
 Следующий шаг:
 
-- обновить capability-based availability команды `tool summary posts`, чтобы она зависела от двух серверов, а не только от `stateful`.
+- перейти к этапу 4 и обновить capability-based availability команды `tool summary posts`.
+
+## Этап 4. Обновление routing-модели и command definitions
+
+Статус: в работе
+
+Цель этапа:
+
+- сделать доступность `tool summary posts` зависимой от связки двух серверов;
+- синхронизировать capability-based help с новым multi-server flow;
+- сохранить обратную совместимость остальных команд.
+
+Выполненные действия:
+
+1. `ToolSummaryPostsAgentCommandDefinition` переведён на custom resolve вместо single-server `RequiredToolsAgentCommandDefinition`.
+2. Команда `tool summary posts` теперь доступна только если:
+   - на `stateless` сервере найден `list_posts`;
+   - на `stateful` сервере найдены `merge_posts` и `save_summary`.
+3. Обновлён `AvailableAgentCommandResolverTest`:
+   - команда остаётся доступной при полном наборе cross-server capabilities;
+   - команда скрывается при неполном pipeline-наборе tools.
+4. Прогнаны тесты:
+   - `AvailableAgentCommandResolverTest`
+   - `DefaultAgentTest`
+
+Принятые решения:
+
+- для cross-server команды используется custom definition, а не усложнение общей routing-модели на этом шаге;
+- `AvailableAgentCommand` для `tool summary posts` остаётся репрезентативной записью для help/availability, а не полным описанием всего orchestration path.
+
+Проверка:
+
+- targeted Gradle test run завершился успешно;
+- capability-based availability теперь соответствует фактическому multi-server сценарию.
+
+Коммиты этапа:
+
+- текущий коммит шага — multi-server availability для `tool summary posts`.
+
+Следующий шаг:
+
+- перейти к этапу 5 и усилить тесты на порядок вызовов, ошибки шагов и частично недоступные capabilities.

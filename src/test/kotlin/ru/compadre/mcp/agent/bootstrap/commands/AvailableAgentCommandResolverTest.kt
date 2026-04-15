@@ -31,7 +31,6 @@ class AvailableAgentCommandResolverTest {
                     prepared = true,
                     tools = listOf(
                         McpToolDescriptor(name = "start_random_posts", title = "Start Random Posts"),
-                        McpToolDescriptor(name = "pick_random_posts", title = "Pick Random Posts"),
                         McpToolDescriptor(name = "merge_posts", title = "Merge Posts"),
                         McpToolDescriptor(name = "save_summary", title = "Save Summary"),
                         McpToolDescriptor(name = "list_saved_summaries", title = "List Saved Summaries"),
@@ -69,6 +68,36 @@ class AvailableAgentCommandResolverTest {
 
         assertEquals(1, result.size)
         assertEquals(AgentCommandId.TOOL_POST, result.single().commandId)
+    }
+
+    @Test
+    fun resolveRequiresSourceAndPipelineServersForSummaryPosts() {
+        val resolver = AvailableAgentCommandResolver(
+            definitions = supportedAgentCommandDefinitions(),
+        )
+
+        val result = resolver.resolve(
+            servers = listOf(
+                PreparedMcpServer(
+                    serverId = McpServerId.LOCAL_MCP_SERVER,
+                    endpoint = "http://127.0.0.1:3000/mcp",
+                    prepared = true,
+                    tools = listOf(
+                        McpToolDescriptor(name = "list_posts", title = "List Posts"),
+                    ),
+                ),
+                PreparedMcpServer(
+                    serverId = McpServerId.LOCAL_STATEFUL_MCP_SERVER,
+                    endpoint = "http://127.0.0.1:3001/mcp",
+                    prepared = true,
+                    tools = listOf(
+                        McpToolDescriptor(name = "save_summary", title = "Save Summary"),
+                    ),
+                ),
+            ),
+        )
+
+        assertEquals(false, result.any { it.commandId == AgentCommandId.TOOL_SUMMARY_POSTS })
     }
 
     @Test
