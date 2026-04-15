@@ -1,4 +1,4 @@
-# ai_advent_day_19
+﻿# ai_advent_day_20
 
 Учебный проект по теме "День 19. Композиция MCP-инструментов".
 
@@ -226,23 +226,23 @@ powershell -ExecutionPolicy Bypass -File .\scripts\check-e2e.ps1
 
 ## Ключевые файлы
 
-- [DefaultCliCommandParser.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_19/src/main/kotlin/ru/compadre/mcp/presentation/cli/DefaultCliCommandParser.kt)
+- [DefaultCliCommandParser.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_20/src/main/kotlin/ru/compadre/mcp/presentation/cli/DefaultCliCommandParser.kt)
   Парсинг CLI-команд.
-- [DefaultWorkflowCommandHandler.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_19/src/main/kotlin/ru/compadre/mcp/workflow/service/DefaultWorkflowCommandHandler.kt)
+- [DefaultWorkflowCommandHandler.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_20/src/main/kotlin/ru/compadre/mcp/workflow/service/DefaultWorkflowCommandHandler.kt)
   Запуск пользовательских workflow-сценариев.
-- [DefaultAgent.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_19/src/main/kotlin/ru/compadre/mcp/agent/DefaultAgent.kt)
+- [DefaultAgent.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_20/src/main/kotlin/ru/compadre/mcp/agent/DefaultAgent.kt)
   Orchestration pipeline и выбор 3 публикаций.
-- [StatefulMcpServerFactory.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_19/src/main/kotlin/ru/compadre/mcp/mcp/server/stateful/StatefulMcpServerFactory.kt)
+- [StatefulMcpServerFactory.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_20/src/main/kotlin/ru/compadre/mcp/mcp/server/stateful/StatefulMcpServerFactory.kt)
   Регистрация stateful MCP-tools, включая summary-pipeline.
-- [StatelessMcpServerFactory.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_19/src/main/kotlin/ru/compadre/mcp/mcp/server/stateless/StatelessMcpServerFactory.kt)
+- [StatelessMcpServerFactory.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_20/src/main/kotlin/ru/compadre/mcp/mcp/server/stateless/StatelessMcpServerFactory.kt)
   Reference-набор stateless tools.
-- [SummaryStorage.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_19/src/main/kotlin/ru/compadre/mcp/mcp/server/common/summarypipeline/storage/SummaryStorage.kt)
+- [SummaryStorage.kt](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_20/src/main/kotlin/ru/compadre/mcp/mcp/server/common/summarypipeline/storage/SummaryStorage.kt)
   Контракт локального хранилища.
 
 ## Документация
 
-- [mcp-summary-pipeline-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_19/docs/mcp-summary-pipeline-spec.md)
-- [mcp-summary-pipeline-implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_19/docs/mcp-summary-pipeline-implementation-log.md)
+- [mcp-summary-pipeline-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_20/docs/mcp-summary-pipeline-spec.md)
+- [mcp-summary-pipeline-implementation-log.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_20/docs/mcp-summary-pipeline-implementation-log.md)
 
 ## Ограничения текущего варианта
 

@@ -1,6 +1,6 @@
 ﻿# Р–СѓСЂРЅР°Р» СЂРµР°Р»РёР·Р°С†РёРё
 
-Р¤Р°Р№Р» С„РёРєСЃРёСЂСѓРµС‚ С„Р°РєС‚РёС‡РµСЃРєРё РІС‹РїРѕР»РЅРµРЅРЅС‹Рµ С€Р°РіРё РїРѕ РўР— [stateful-random-post-push-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_19/docs/stateful-random-post-push-spec.md).
+Р¤Р°Р№Р» С„РёРєСЃРёСЂСѓРµС‚ С„Р°РєС‚РёС‡РµСЃРєРё РІС‹РїРѕР»РЅРµРЅРЅС‹Рµ С€Р°РіРё РїРѕ РўР— [stateful-random-post-push-spec.md](/C:/Users/compadre/Downloads/Projects/AiAdvent/day_20/docs/stateful-random-post-push-spec.md).
 
 ## Р­С‚Р°Рї 1. Р¤РѕСЂРјР°Р»РёР·Р°С†РёСЏ РўР— Рё Р°СЂС…РёС‚РµРєС‚СѓСЂС‹
 
