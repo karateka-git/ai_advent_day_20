@@ -6,6 +6,8 @@ import io.modelcontextprotocol.kotlin.sdk.types.ToolSchema
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
 import ru.compadre.mcp.mcp.server.common.api.jsonplaceholder.JsonPlaceholderApiClient
@@ -16,7 +18,14 @@ private const val DEFAULT_POSTS_LIMIT = 10
 /**
  * Возвращает `inputSchema` для инструмента `list_posts`.
  */
-internal fun listPostsToolSchema(): ToolSchema = ToolSchema()
+internal fun listPostsToolSchema(): ToolSchema = ToolSchema(
+    properties = buildJsonObject {
+        putJsonObject("limit") {
+            put("type", "integer")
+            put("description", "Необязательное количество публикаций, которое нужно вернуть.")
+        }
+    },
+)
 
 /**
  * Возвращает `outputSchema` для инструмента `list_posts`.
@@ -34,13 +43,23 @@ internal fun listPostsToolOutputSchema(): ToolSchema = ToolSchema(
 /**
  * Выполняет server-side сценарий инструмента `list_posts`.
  *
+ * @param arguments JSON-аргументы вызова инструмента
  * @param jsonPlaceholderApiClient клиент к внешнему источнику данных
  * @return результат вызова MCP-инструмента
  */
 internal suspend fun listPostsToolResult(
+    arguments: JsonObject? = null,
     jsonPlaceholderApiClient: JsonPlaceholderApiClient,
 ): CallToolResult {
-    val posts = jsonPlaceholderApiClient.fetchPosts(DEFAULT_POSTS_LIMIT)
+    val limit = arguments.optionalIntArgument("limit") ?: DEFAULT_POSTS_LIMIT
+    if (limit < 1) {
+        return CallToolResult(
+            content = listOf(TextContent("Для инструмента `list_posts` аргумент `limit` должен быть не меньше 1.")),
+            isError = true,
+        )
+    }
+
+    val posts = jsonPlaceholderApiClient.fetchPosts(limit)
 
     return CallToolResult(
         content = listOf(TextContent(formatPostsText(posts))),
@@ -70,3 +89,9 @@ private fun postsStructuredContent(posts: List<JsonPlaceholderPost>): JsonObject
         }
     })
 }
+
+private fun JsonObject?.optionalIntArgument(name: String): Int? =
+    this?.get(name)
+        ?.jsonPrimitive
+        ?.contentOrNull
+        ?.toIntOrNull()

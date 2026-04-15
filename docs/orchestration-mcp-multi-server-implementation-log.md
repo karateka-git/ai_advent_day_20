@@ -71,7 +71,12 @@
 2. `list_posts` начал возвращать `structuredContent` со списком публикаций.
 3. `StatelessMcpServerFactory` начал публиковать `outputSchema` для `list_posts`.
 4. Обновлён unit-тест `ListPostsToolTest` с проверкой `structuredContent`.
-5. Прогнаны релевантные тесты:
+5. `list_posts` получил необязательный аргумент `limit`, чтобы agent мог запрашивать нужный объём source data.
+6. Обновлены server-side тесты для сценариев:
+   - default limit;
+   - explicit limit;
+   - invalid limit.
+7. Прогнаны релевантные тесты:
    - `ListPostsToolTest`
    - `StatelessMcpServerTest`
    - `StatelessMcpClientTest`
@@ -79,12 +84,14 @@
 Принятые решения:
 
 - source tool остаётся существующим `list_posts`, а не новым отдельным инструментом;
+- для управления объёмом source data расширяется существующий tool, а не добавляется новый дублирующий endpoint;
 - человекочитаемый текст у `list_posts` сохраняется для CLI, а orchestration опирается на `structuredContent`.
 
 Проверка:
 
 - targeted Gradle test run завершился успешно;
-- `list_posts` теперь может использоваться как source tool для следующего шага cross-server orchestration.
+- `list_posts` теперь может использоваться как source tool для следующего шага cross-server orchestration;
+- agent сможет передавать в source tool `count` как `limit`, не ломая обычную команду `tool posts`.
 
 Коммиты этапа:
 

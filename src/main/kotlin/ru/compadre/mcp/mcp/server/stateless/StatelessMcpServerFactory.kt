@@ -84,8 +84,9 @@ internal fun createStatelessMcpServer(
         description = "Возвращает первые публикации из mock API JSONPlaceholder.",
         inputSchema = listPostsToolSchema(),
         outputSchema = listPostsToolOutputSchema(),
-    ) {
+    ) { request ->
         listPostsToolResult(
+            arguments = request.arguments,
             jsonPlaceholderApiClient = jsonPlaceholderApiClient,
         )
     }
