@@ -482,4 +482,114 @@ class DefaultAgentTest {
             callOrder,
         )
     }
+
+    @Test
+    fun runSummaryPipelineStopsWhenSourceToolReturnsError() = runBlocking {
+        val registry = AgentCapabilityRegistry()
+        val statelessEndpoint = "http://127.0.0.1:3000/mcp"
+        val statefulEndpoint = "http://127.0.0.1:3001/mcp"
+        val callOrder = mutableListOf<String>()
+        val agent = DefaultAgent(
+            mcpClient = object : McpClient {
+                override suspend fun connect(endpoint: String): McpConnectionSnapshot =
+                    if (endpoint == statelessEndpoint) {
+                        McpConnectionSnapshot(
+                            endpoint = endpoint,
+                            serverInfo = McpServerInfo(name = "local_mcp_server", version = "0.1.0"),
+                            tools = listOf(McpToolDescriptor(name = "list_posts", title = "List Posts")),
+                        )
+                    } else {
+                        McpConnectionSnapshot(
+                            endpoint = endpoint,
+                            serverInfo = McpServerInfo(name = "local_stateful_mcp_server", version = "0.1.0"),
+                            tools = listOf(
+                                McpToolDescriptor(name = "merge_posts", title = "Merge Posts"),
+                                McpToolDescriptor(name = "save_summary", title = "Save Summary"),
+                            ),
+                        )
+                    }
+
+                override suspend fun callTool(endpoint: String, request: McpToolCallRequest): McpToolCallResult {
+                    callOrder += "${endpoint}:${request.toolName}"
+                    return McpToolCallResult(
+                        toolName = request.toolName,
+                        isError = true,
+                        content = listOf("source failed"),
+                    )
+                }
+            },
+            capabilityRegistry = registry,
+        )
+
+        agent.handle(
+            AgentRequest.Prepare(
+                servers = listOf(
+                    KnownMcpServer(serverId = McpServerId.LOCAL_MCP_SERVER, endpoint = statelessEndpoint),
+                    KnownMcpServer(serverId = McpServerId.LOCAL_STATEFUL_MCP_SERVER, endpoint = statefulEndpoint),
+                ),
+            ),
+        )
+
+        val response = agent.handle(
+            AgentRequest.RunSummaryPipeline(
+                count = 5,
+                strategy = "long",
+            ),
+        )
+
+        assertIs<AgentResponse.ToolCallSuccess>(response)
+        assertEquals(statelessEndpoint, response.endpoint)
+        assertEquals(true, response.result.isError)
+        assertEquals("summary_pipeline", response.result.toolName)
+        assertEquals(listOf("${statelessEndpoint}:list_posts"), callOrder)
+    }
+
+    @Test
+    fun runSummaryPipelineFailsWhenStatefulServerIsMissing() = runBlocking {
+        val registry = AgentCapabilityRegistry()
+        val agent = DefaultAgent(
+            mcpClient = object : McpClient {
+                override suspend fun connect(endpoint: String): McpConnectionSnapshot = McpConnectionSnapshot(
+                    endpoint = endpoint,
+                    serverInfo = McpServerInfo(
+                        name = "local_mcp_server",
+                        version = "0.1.0",
+                        title = "Local MCP Server",
+                    ),
+                    tools = listOf(
+                        McpToolDescriptor(name = "list_posts", title = "List Posts"),
+                    ),
+                )
+
+                override suspend fun callTool(endpoint: String, request: McpToolCallRequest): McpToolCallResult {
+                    error("tools/call should not be used in this test")
+                }
+            },
+            capabilityRegistry = registry,
+        )
+
+        agent.handle(
+            AgentRequest.Prepare(
+                servers = listOf(
+                    KnownMcpServer(
+                        serverId = McpServerId.LOCAL_MCP_SERVER,
+                        endpoint = "http://127.0.0.1:3000/mcp",
+                    ),
+                ),
+            ),
+        )
+
+        val response = agent.handle(
+            AgentRequest.RunSummaryPipeline(
+                count = 4,
+                strategy = "short",
+            ),
+        )
+
+        assertIs<AgentResponse.Failure>(response)
+        assertEquals(
+            "Summary pipeline недоступен: stateful MCP-сервер с merge/save tools не подготовлен.",
+            response.message,
+        )
+    }
 }

@@ -145,7 +145,7 @@
 
 ## Этап 4. Обновление routing-модели и command definitions
 
-Статус: в работе
+Статус: завершён
 
 Цель этапа:
 
@@ -178,8 +178,48 @@
 
 Коммиты этапа:
 
-- текущий коммит шага — multi-server availability для `tool summary posts`.
+- `9f948f9` — multi-server availability для `tool summary posts`.
 
 Следующий шаг:
 
 - перейти к этапу 5 и усилить тесты на порядок вызовов, ошибки шагов и частично недоступные capabilities.
+
+## Этап 5. Тесты на выбор и порядок вызовов
+
+Статус: в работе
+
+Цель этапа:
+
+- подтвердить корректный порядок вызовов в multi-server pipeline;
+- проверить негативные сценарии source-step и отсутствующих capabilities;
+- зафиксировать поведение pipeline тестами до обновления e2e.
+
+Выполненные действия:
+
+1. В `DefaultAgentTest` уже проверяется порядок вызовов:
+   - `list_posts` на `stateless`;
+   - `merge_posts` на `stateful`;
+   - `save_summary` на `stateful`.
+2. Добавлен тест на остановку pipeline при source error.
+3. Добавлен тест на понятную failure при отсутствии `stateful` pipeline-сервера.
+4. Повторно прогнаны тесты:
+   - `DefaultAgentTest`
+   - `AvailableAgentCommandResolverTest`
+
+Принятые решения:
+
+- source-error сценарий завершается `ToolCallSuccess` с `isError = true`, чтобы сохранить единый контракт pipeline-result;
+- отсутствие обязательного сервера трактуется как агентная `Failure`, а не как частичный tool result.
+
+Проверка:
+
+- targeted Gradle test run завершился успешно;
+- тестовый контур теперь покрывает и happy path, и ключевые negative paths multi-server flow.
+
+Коммиты этапа:
+
+- текущий коммит шага — negative-path тесты для multi-server pipeline.
+
+Следующий шаг:
+
+- перейти к этапу 6 и обновить scripted e2e так, чтобы он подтверждал новый cross-server сценарий end-to-end.
