@@ -54,3 +54,42 @@
 Следующий шаг:
 
 - перейти к этапу 2 и подготовить data/capability contracts для `list_posts` как source tool в cross-server flow.
+
+## Этап 2. Контракты данных и capability discovery для flow
+
+Статус: в работе
+
+Цель этапа:
+
+- подготовить data contract для source tool на `stateless` сервере;
+- сделать `list_posts` пригодным для orchestration без парсинга текстового вывода;
+- зафиксировать базу для capability-driven cross-server pipeline.
+
+Выполненные действия:
+
+1. `list_posts` расширен output schema для machine-readable ответа.
+2. `list_posts` начал возвращать `structuredContent` со списком публикаций.
+3. `StatelessMcpServerFactory` начал публиковать `outputSchema` для `list_posts`.
+4. Обновлён unit-тест `ListPostsToolTest` с проверкой `structuredContent`.
+5. Прогнаны релевантные тесты:
+   - `ListPostsToolTest`
+   - `StatelessMcpServerTest`
+   - `StatelessMcpClientTest`
+
+Принятые решения:
+
+- source tool остаётся существующим `list_posts`, а не новым отдельным инструментом;
+- человекочитаемый текст у `list_posts` сохраняется для CLI, а orchestration опирается на `structuredContent`.
+
+Проверка:
+
+- targeted Gradle test run завершился успешно;
+- `list_posts` теперь может использоваться как source tool для следующего шага cross-server orchestration.
+
+Коммиты этапа:
+
+- текущий коммит шага — structured contract для `list_posts` как source tool.
+
+Следующий шаг:
+
+- подготовить agent-level capability contract для multi-server availability команды `tool summary posts`.

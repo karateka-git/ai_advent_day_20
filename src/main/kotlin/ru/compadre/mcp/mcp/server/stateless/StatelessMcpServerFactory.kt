@@ -17,6 +17,7 @@ import ru.compadre.mcp.mcp.server.common.api.jsonplaceholder.DefaultJsonPlacehol
 import ru.compadre.mcp.mcp.server.common.api.jsonplaceholder.JsonPlaceholderApiClient
 import ru.compadre.mcp.mcp.server.common.toolcall.tools.fetchpost.fetchPostToolResult
 import ru.compadre.mcp.mcp.server.common.toolcall.tools.fetchpost.fetchPostToolSchema
+import ru.compadre.mcp.mcp.server.common.toolcall.tools.listposts.listPostsToolOutputSchema
 import ru.compadre.mcp.mcp.server.common.toolcall.tools.listposts.listPostsToolResult
 import ru.compadre.mcp.mcp.server.common.toolcall.tools.listposts.listPostsToolSchema
 
@@ -82,6 +83,7 @@ internal fun createStatelessMcpServer(
         title = "List Posts",
         description = "Возвращает первые публикации из mock API JSONPlaceholder.",
         inputSchema = listPostsToolSchema(),
+        outputSchema = listPostsToolOutputSchema(),
     ) {
         listPostsToolResult(
             jsonPlaceholderApiClient = jsonPlaceholderApiClient,
