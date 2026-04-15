@@ -84,28 +84,36 @@ class DefaultAgent(
 
     private suspend fun handleRunSummaryPipeline(request: AgentRequest.RunSummaryPipeline): AgentResponse =
         runCatching {
-            val server = requirePreparedSummaryPipelineServer()
-            ensureSummaryPipelineToolsExist(server)
+            val sourceServer = requirePreparedServer(
+                serverId = McpServerId.LOCAL_MCP_SERVER,
+                requiredTools = setOf(LIST_POSTS_TOOL),
+                unavailableMessage = "Summary pipeline недоступен: stateless MCP-сервер с source tool не подготовлен.",
+            )
+            val pipelineServer = requirePreparedServer(
+                serverId = McpServerId.LOCAL_STATEFUL_MCP_SERVER,
+                requiredTools = setOf(MERGE_POSTS_TOOL, SAVE_SUMMARY_TOOL),
+                unavailableMessage = "Summary pipeline недоступен: stateful MCP-сервер с merge/save tools не подготовлен.",
+            )
 
-            val randomPostsResult = mcpClient.callTool(
-                endpoint = server.endpoint,
+            val sourcePostsResult = mcpClient.callTool(
+                endpoint = sourceServer.endpoint,
                 request = McpToolCallRequest(
-                    toolName = PICK_RANDOM_POSTS_TOOL,
-                    arguments = mapOf("count" to request.count),
+                    toolName = LIST_POSTS_TOOL,
+                    arguments = mapOf("limit" to request.count),
                 ),
             )
-            if (randomPostsResult.isError) {
+            if (sourcePostsResult.isError) {
                 return AgentResponse.ToolCallSuccess(
-                    endpoint = server.endpoint,
-                    result = randomPostsResult.copy(toolName = SUMMARY_PIPELINE_RESULT_TOOL),
+                    endpoint = sourceServer.endpoint,
+                    result = sourcePostsResult.copy(toolName = SUMMARY_PIPELINE_RESULT_TOOL),
                 )
             }
 
-            val randomPosts = decodeStructured<PostSelection>(randomPostsResult).posts
-            val selectedPosts = selectSummaryPosts(randomPosts, request.strategy)
+            val availablePosts = decodeStructured<PostSelection>(sourcePostsResult).posts
+            val selectedPosts = selectSummaryPosts(availablePosts, request.strategy)
 
             val mergeResult = mcpClient.callTool(
-                endpoint = server.endpoint,
+                endpoint = pipelineServer.endpoint,
                 request = McpToolCallRequest(
                     toolName = MERGE_POSTS_TOOL,
                     arguments = mapOf(
@@ -123,14 +131,14 @@ class DefaultAgent(
             )
             if (mergeResult.isError) {
                 return AgentResponse.ToolCallSuccess(
-                    endpoint = server.endpoint,
+                    endpoint = pipelineServer.endpoint,
                     result = mergeResult.copy(toolName = SUMMARY_PIPELINE_RESULT_TOOL),
                 )
             }
 
             val summaryDraft = decodeStructured<SummaryDraft>(mergeResult)
             val saveResult = mcpClient.callTool(
-                endpoint = server.endpoint,
+                endpoint = pipelineServer.endpoint,
                 request = McpToolCallRequest(
                     toolName = SAVE_SUMMARY_TOOL,
                     arguments = mapOf(
@@ -143,14 +151,14 @@ class DefaultAgent(
             )
             if (saveResult.isError) {
                 return AgentResponse.ToolCallSuccess(
-                    endpoint = server.endpoint,
+                    endpoint = pipelineServer.endpoint,
                     result = saveResult.copy(toolName = SUMMARY_PIPELINE_RESULT_TOOL),
                 )
             }
 
             val savedSummary = decodeStructured<SavedSummary>(saveResult)
             AgentResponse.ToolCallSuccess(
-                endpoint = server.endpoint,
+                endpoint = pipelineServer.endpoint,
                 result = McpToolCallResult(
                     toolName = SUMMARY_PIPELINE_RESULT_TOOL,
                     isError = false,
@@ -206,17 +214,28 @@ class DefaultAgent(
             )
         }
 
-    private fun requirePreparedSummaryPipelineServer(): PreparedMcpServer =
-        capabilityRegistry.snapshot().servers.firstOrNull {
-            it.serverId == McpServerId.LOCAL_STATEFUL_MCP_SERVER && it.prepared
-        } ?: error("Summary pipeline недоступен: stateful MCP-сервер не подготовлен.")
+    private fun requirePreparedServer(
+        serverId: McpServerId,
+        requiredTools: Set<String>,
+        unavailableMessage: String,
+    ): PreparedMcpServer {
+        val server = capabilityRegistry.snapshot().servers.firstOrNull {
+            it.serverId == serverId && it.prepared
+        } ?: error(unavailableMessage)
 
-    private fun ensureSummaryPipelineToolsExist(server: PreparedMcpServer) {
+        ensureToolsExist(server, requiredTools, unavailableMessage)
+        return server
+    }
+
+    private fun ensureToolsExist(
+        server: PreparedMcpServer,
+        requiredTools: Set<String>,
+        unavailableMessage: String,
+    ) {
         val toolNames = server.tools.map { it.name }.toSet()
-        val requiredTools = setOf(PICK_RANDOM_POSTS_TOOL, MERGE_POSTS_TOOL, SAVE_SUMMARY_TOOL)
         val missingTools = requiredTools - toolNames
         check(missingTools.isEmpty()) {
-            "Summary pipeline недоступен: отсутствуют MCP-инструменты ${missingTools.joinToString()}."
+            "$unavailableMessage Отсутствуют MCP-инструменты: ${missingTools.joinToString()}."
         }
     }
 
@@ -243,7 +262,7 @@ class DefaultAgent(
     }
 
     private companion object {
-        const val PICK_RANDOM_POSTS_TOOL = "pick_random_posts"
+        const val LIST_POSTS_TOOL = "list_posts"
         const val MERGE_POSTS_TOOL = "merge_posts"
         const val SAVE_SUMMARY_TOOL = "save_summary"
         const val SUMMARY_PIPELINE_RESULT_TOOL = "summary_pipeline"

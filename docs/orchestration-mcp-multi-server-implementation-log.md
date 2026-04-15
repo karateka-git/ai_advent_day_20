@@ -57,7 +57,7 @@
 
 ## Этап 2. Контракты данных и capability discovery для flow
 
-Статус: в работе
+Статус: завершён
 
 Цель этапа:
 
@@ -95,8 +95,50 @@
 
 Коммиты этапа:
 
-- текущий коммит шага — structured contract для `list_posts` как source tool.
+- `d773109` — structured contract для `list_posts` как source tool;
+- `a9615b9` — поддержка `limit` у `list_posts` для orchestration flow.
 
 Следующий шаг:
 
-- подготовить agent-level capability contract для multi-server availability команды `tool summary posts`.
+- перейти к этапу 3 и перевести `summary pipeline` на реальный cross-server flow.
+
+## Этап 3. Реализация cross-server orchestration в agent/workflow
+
+Статус: в работе
+
+Цель этапа:
+
+- перевести `summary pipeline` с single-server сценария на multi-server flow;
+- сделать `list_posts` источником данных на `stateless` сервере;
+- сохранить merge/save шаги на `stateful` сервере.
+
+Выполненные действия:
+
+1. `DefaultAgent` переведён на flow:
+   - `list_posts` на `stateless`;
+   - agent-side selection;
+   - `merge_posts` на `stateful`;
+   - `save_summary` на `stateful`.
+2. Для source step агент передаёт `count` как `limit` в `list_posts`.
+3. Добавлена проверка порядка вызовов и серверов в `DefaultAgentTest`.
+4. Прогнаны тесты:
+   - `DefaultAgentTest`
+   - `DefaultWorkflowCommandHandlerTest`
+
+Принятые решения:
+
+- cross-server routing пока реализуется прямо в orchestration flow агента;
+- availability команды будет донастроена отдельным этапом через command definitions и resolver.
+
+Проверка:
+
+- targeted Gradle test run завершился успешно;
+- pipeline действительно использует `stateless` сервер как source и `stateful` как processing/persistence контур.
+
+Коммиты этапа:
+
+- текущий коммит шага — cross-server orchestration в `DefaultAgent`.
+
+Следующий шаг:
+
+- обновить capability-based availability команды `tool summary posts`, чтобы она зависела от двух серверов, а не только от `stateful`.

@@ -313,28 +313,48 @@ class DefaultAgentTest {
     }
 
     @Test
-    fun runSummaryPipelineSelectsThreePostsAndSavesSummary() = runBlocking {
+    fun runSummaryPipelineUsesStatelessSourceAndStatefulSaveFlow() = runBlocking {
         val registry = AgentCapabilityRegistry()
-        val endpoint = "http://127.0.0.1:3001/mcp"
+        val statelessEndpoint = "http://127.0.0.1:3000/mcp"
+        val statefulEndpoint = "http://127.0.0.1:3001/mcp"
+        val callOrder = mutableListOf<String>()
         val agent = DefaultAgent(
             mcpClient = object : McpClient {
-                override suspend fun connect(endpoint: String): McpConnectionSnapshot = McpConnectionSnapshot(
-                    endpoint = endpoint,
-                    serverInfo = McpServerInfo(
-                        name = "local_stateful_mcp_server",
-                        version = "0.1.0",
-                        title = "Local Stateful MCP Server",
-                    ),
-                    tools = listOf(
-                        McpToolDescriptor(name = "pick_random_posts", title = "Pick Random Posts"),
-                        McpToolDescriptor(name = "merge_posts", title = "Merge Posts"),
-                        McpToolDescriptor(name = "save_summary", title = "Save Summary"),
-                    ),
-                )
+                override suspend fun connect(endpoint: String): McpConnectionSnapshot =
+                    if (endpoint == statelessEndpoint) {
+                        McpConnectionSnapshot(
+                            endpoint = endpoint,
+                            serverInfo = McpServerInfo(
+                                name = "local_mcp_server",
+                                version = "0.1.0",
+                                title = "Local MCP Server",
+                            ),
+                            tools = listOf(
+                                McpToolDescriptor(name = "list_posts", title = "List Posts"),
+                            ),
+                        )
+                    } else {
+                        McpConnectionSnapshot(
+                            endpoint = endpoint,
+                            serverInfo = McpServerInfo(
+                                name = "local_stateful_mcp_server",
+                                version = "0.1.0",
+                                title = "Local Stateful MCP Server",
+                            ),
+                            tools = listOf(
+                                McpToolDescriptor(name = "merge_posts", title = "Merge Posts"),
+                                McpToolDescriptor(name = "save_summary", title = "Save Summary"),
+                            ),
+                        )
+                    }
 
                 override suspend fun callTool(endpoint: String, request: McpToolCallRequest): McpToolCallResult {
+                    callOrder += "${endpoint}:${request.toolName}"
                     return when (request.toolName) {
-                        "pick_random_posts" -> McpToolCallResult(
+                        "list_posts" -> {
+                            assertEquals(statelessEndpoint, endpoint)
+                            assertEquals(4, request.arguments["limit"])
+                            McpToolCallResult(
                             toolName = request.toolName,
                             isError = false,
                             content = listOf("selected"),
@@ -375,8 +395,10 @@ class DefaultAgentTest {
                                 }
                             },
                         )
+                        }
 
                         "merge_posts" -> {
+                            assertEquals(statefulEndpoint, endpoint)
                             val posts = request.arguments["posts"] as List<*>
                             assertEquals(3, posts.size)
                             McpToolCallResult(
@@ -396,7 +418,9 @@ class DefaultAgentTest {
                             )
                         }
 
-                        "save_summary" -> McpToolCallResult(
+                        "save_summary" -> {
+                            assertEquals(statefulEndpoint, endpoint)
+                            McpToolCallResult(
                             toolName = request.toolName,
                             isError = false,
                             content = listOf("saved"),
@@ -414,6 +438,7 @@ class DefaultAgentTest {
                                 }
                             },
                         )
+                        }
 
                         else -> error("unexpected tool ${request.toolName}")
                     }
@@ -426,8 +451,12 @@ class DefaultAgentTest {
             AgentRequest.Prepare(
                 servers = listOf(
                     KnownMcpServer(
+                        serverId = McpServerId.LOCAL_MCP_SERVER,
+                        endpoint = statelessEndpoint,
+                    ),
+                    KnownMcpServer(
                         serverId = McpServerId.LOCAL_STATEFUL_MCP_SERVER,
-                        endpoint = endpoint,
+                        endpoint = statefulEndpoint,
                     ),
                 ),
             ),
@@ -444,5 +473,13 @@ class DefaultAgentTest {
         assertEquals("summary_pipeline", response.result.toolName)
         assertEquals(false, response.result.isError)
         assertEquals(true, response.result.content.any { it.contains("summary-1") })
+        assertEquals(
+            listOf(
+                "http://127.0.0.1:3000/mcp:list_posts",
+                "http://127.0.0.1:3001/mcp:merge_posts",
+                "http://127.0.0.1:3001/mcp:save_summary",
+            ),
+            callOrder,
+        )
     }
 }
