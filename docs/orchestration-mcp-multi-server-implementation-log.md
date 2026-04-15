@@ -13,7 +13,7 @@
 
 ## Этап 1. Спецификация и фиксация контракта
 
-Статус: в работе
+Статус: завершён
 
 Цель этапа:
 
@@ -30,23 +30,27 @@
    - длинный flow с `stateless` и `stateful` серверами;
    - требования к выбору tools и маршрутизации;
    - этапы реализации, сценарий проверки и критерии готовности.
+4. В качестве source tool для cross-server flow зафиксирован `list_posts` на `stateless` сервере.
+5. Отдельно зафиксировано, что `list_posts` на следующем этапе должен получить structured response для orchestration.
 
 Принятые решения:
 
 - основной демонстрационный сценарий строится вокруг команды `tool summary posts <count> [strategy]`;
 - source tool должен жить на `stateless` сервере, а merge/save/read tools — на `stateful`;
+- для роли source tool выбран существующий `list_posts`, а не новый отдельный инструмент;
 - агент остаётся единственной точкой orchestration и выбора инструментов.
 
 Проверка:
 
 - в `docs` появились отдельные spec и implementation log для новой ветки работ;
-- структура этапов и ожидаемый результат зафиксированы письменно.
+- структура этапов и ожидаемый результат зафиксированы письменно;
+- контракт `list_posts -> merge_posts -> save_summary` зафиксирован на уровне документации.
 
 Коммиты этапа:
 
-- текущий коммит шага — создание spec и implementation log для multi-server orchestration.
+- `ae731ca` — создание spec и implementation log для multi-server orchestration;
+- текущий коммит шага — фиксация source tool и expected cross-server order в документации.
 
 Следующий шаг:
 
-- зафиксировать конкретный source tool и expected order вызовов в документации и проектной модели этапа 1.
-
+- перейти к этапу 2 и подготовить data/capability contracts для `list_posts` как source tool в cross-server flow.
